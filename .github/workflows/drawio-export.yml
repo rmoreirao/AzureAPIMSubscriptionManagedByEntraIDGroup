@@ -1,0 +1,33 @@
+name: Export draw.io diagrams
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**/*.drawio"
+      - ".github/workflows/drawio-export.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export .drawio files to PNG
+        uses: rlespinasse/drawio-export-action@v2
+        with:
+          path: docs
+          format: png
+          output: .
+          action-mode: all
+
+      - name: Commit exported images
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: update exported draw.io diagrams"
+          file_pattern: "docs/**/*.png"
