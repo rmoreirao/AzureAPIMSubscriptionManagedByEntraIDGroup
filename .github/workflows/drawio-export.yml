@@ -23,7 +23,8 @@ jobs:
         with:
           path: docs
           format: png
-          output: .
+          output: export
+          remove-page-suffix: true
           action-mode: all
 
       - name: Commit exported images
