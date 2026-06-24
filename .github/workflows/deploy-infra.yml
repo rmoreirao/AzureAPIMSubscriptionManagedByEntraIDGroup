@@ -27,9 +27,9 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ vars.AZURE_CLIENT_ID || '0f441d5a-6948-438f-a66f-6b27972fb414' }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID || 'b9e20f22-cdf3-4d31-9628-2e615edcddb1' }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || 'b0dfd5b3-9f3c-4fb5-ae5e-0e7f81eab970' }}
 
       - name: Ensure resource group exists
         uses: azure/cli@v2
@@ -47,5 +47,5 @@ jobs:
           template: infra/main.bicep
           parameters: >-
             infra/main.parameters.dev.json
-            publisherEmail=${{ vars.APIM_PUBLISHER_EMAIL }}
+            publisherEmail=${{ vars.APIM_PUBLISHER_EMAIL || 'rmoreirao@microsoft.com' }}
           failOnStdErr: false
