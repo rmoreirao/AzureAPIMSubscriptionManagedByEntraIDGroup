@@ -58,6 +58,7 @@ public sealed class UserSubscriptionView
     public string SubscriptionName { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string Scope { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
     public DateTimeOffset? DateCreated { get; set; }
     public string? PrimaryKey { get; set; }
     public string? SecondaryKey { get; set; }
@@ -65,6 +66,16 @@ public sealed class UserSubscriptionView
 
 public sealed class SubscriptionKeys
 {
+    public string? PrimaryKey { get; set; }
+    public string? SecondaryKey { get; set; }
+}
+
+/// <summary>The live state, scope/product and keys of an APIM subscription, used to enrich list views.</summary>
+public sealed class SubscriptionDetails
+{
+    public string State { get; set; } = string.Empty;
+    public string Scope { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
     public string? PrimaryKey { get; set; }
     public string? SecondaryKey { get; set; }
 }
@@ -77,6 +88,9 @@ public sealed class TeamSubscriptionView
     public string SubscriptionName { get; set; } = string.Empty;
     public string EntraIdGroup { get; set; } = string.Empty;
     public string TeamName { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string Scope { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
     public DateTimeOffset DateCreated { get; set; }
     public string? PrimaryKey { get; set; }
     public string? SecondaryKey { get; set; }
@@ -91,5 +105,20 @@ public sealed class TeamSubscriptionView
         DateCreated = s.DateCreated,
         PrimaryKey = keys.PrimaryKey,
         SecondaryKey = keys.SecondaryKey
+    };
+
+    public static TeamSubscriptionView From(TeamSubscription s, SubscriptionDetails details) => new()
+    {
+        Id = s.Id,
+        SubscriptionId = s.SubscriptionId,
+        SubscriptionName = s.SubscriptionName,
+        EntraIdGroup = s.EntraIdGroup,
+        TeamName = s.TeamName,
+        State = details.State,
+        Scope = details.Scope,
+        Product = details.Product,
+        DateCreated = s.DateCreated,
+        PrimaryKey = details.PrimaryKey,
+        SecondaryKey = details.SecondaryKey
     };
 }

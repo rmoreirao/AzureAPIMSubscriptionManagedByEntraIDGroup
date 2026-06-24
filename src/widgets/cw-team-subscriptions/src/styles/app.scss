@@ -49,6 +49,80 @@ body {
   white-space: nowrap;
 }
 
+.actions-col {
+  position: relative;
+  width: 36px;
+  text-align: right;
+}
+
+.state--active {
+  color: #107c10;
+}
+
+.state--inactive {
+  color: #a4262c;
+}
+
+.inactive-note {
+  color: #605e5c;
+  font-style: italic;
+}
+
+.kebab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #605e5c;
+}
+
+.kebab:hover {
+  background: #f3f2f1;
+  color: #323130;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  min-width: 200px;
+  background: #fff;
+  border: 1px solid #edebe9;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #323130;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: #f3f2f1;
+}
+
+.menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-item--danger {
+  color: #a4262c;
+}
+
 .link-btn {
   background: none;
   border: none;

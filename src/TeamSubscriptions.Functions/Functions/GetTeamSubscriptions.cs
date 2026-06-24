@@ -45,12 +45,12 @@ public sealed class GetTeamSubscriptions
         _logger.LogInformation("Listing team subscriptions for user {UserId} across {Count} group(s)", result.UserId, groupIds.Length);
         var subscriptions = await _repository.GetByGroupsAsync(groupIds, ct);
 
-        // Enrich each record with its current APIM keys for display in the View/Modify widget.
+        // Enrich each record with its current APIM state, product and keys for display in the table.
         var views = new List<TeamSubscriptionView>(subscriptions.Count);
         foreach (var subscription in subscriptions)
         {
-            var keys = await _apim.GetKeysAsync(subscription.SubscriptionId, ct);
-            views.Add(TeamSubscriptionView.From(subscription, keys));
+            var details = await _apim.GetSubscriptionDetailsAsync(subscription.SubscriptionId, ct);
+            views.Add(TeamSubscriptionView.From(subscription, details));
         }
 
         var response = req.CreateResponse(HttpStatusCode.OK);
