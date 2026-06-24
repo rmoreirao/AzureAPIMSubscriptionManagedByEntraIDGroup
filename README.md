@@ -1,0 +1,2 @@
+# AzureAPIMSubscriptionManagedByEntraIDGroup
+AzureAPIMSubscriptionManagedByEntraIDGroup
