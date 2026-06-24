@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Graph;
 using TeamSubscriptions.Functions.Models;
+using TeamSubscriptions.Functions.Security;
 using TeamSubscriptions.Functions.Services;
 
 var host = new HostBuilder()
@@ -36,6 +37,12 @@ var host = new HostBuilder()
         };
         services.AddSingleton(apimOptions);
 
+        var devPortalOptions = new DevPortalOptions
+        {
+            Url = config["DevPortal:Url"] ?? throw new InvalidOperationException("DevPortal:Url is not configured.")
+        };
+        services.AddSingleton(devPortalOptions);
+
         // Keyless Cosmos DB client (RBAC data-plane via managed identity).
         // Use System.Text.Json so [JsonPropertyName] attributes (e.g. "id") are honored;
         // the SDK default (Newtonsoft) ignores them and Cosmos rejects the document.
@@ -53,6 +60,10 @@ var host = new HostBuilder()
         services.AddSingleton<CosmosRepository>();
         services.AddSingleton<GraphService>();
         services.AddSingleton<ApimManagementService>();
+
+        // Dev Portal request authentication (validates the caller is a logged-in APIM Dev Portal user).
+        services.AddHttpClient<ApimUserClient>();
+        services.AddSingleton<RequestAuthService>();
     })
     .Build();
 

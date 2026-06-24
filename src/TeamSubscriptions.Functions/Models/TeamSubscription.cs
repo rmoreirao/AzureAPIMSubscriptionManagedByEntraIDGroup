@@ -43,8 +43,53 @@ public sealed class EntraGroup
     public string DisplayName { get; set; } = string.Empty;
 }
 
+public sealed class CreateUserSubscriptionRequest
+{
+    public string SubscriptionName { get; set; } = string.Empty;
+
+    /// <summary>APIM scope for the subscription (e.g. /products/{id} or /apis).</summary>
+    public string Scope { get; set; } = string.Empty;
+}
+
+/// <summary>An APIM subscription owned by a single Dev Portal user, for the user-subscription widget panel.</summary>
+public sealed class UserSubscriptionView
+{
+    public string SubscriptionId { get; set; } = string.Empty;
+    public string SubscriptionName { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string Scope { get; set; } = string.Empty;
+    public DateTimeOffset? DateCreated { get; set; }
+    public string? PrimaryKey { get; set; }
+    public string? SecondaryKey { get; set; }
+}
+
 public sealed class SubscriptionKeys
 {
     public string? PrimaryKey { get; set; }
     public string? SecondaryKey { get; set; }
+}
+
+/// <summary>A team subscription enriched with its current APIM keys, for the list/view widget.</summary>
+public sealed class TeamSubscriptionView
+{
+    public string Id { get; set; } = string.Empty;
+    public string SubscriptionId { get; set; } = string.Empty;
+    public string SubscriptionName { get; set; } = string.Empty;
+    public string EntraIdGroup { get; set; } = string.Empty;
+    public string TeamName { get; set; } = string.Empty;
+    public DateTimeOffset DateCreated { get; set; }
+    public string? PrimaryKey { get; set; }
+    public string? SecondaryKey { get; set; }
+
+    public static TeamSubscriptionView From(TeamSubscription s, SubscriptionKeys keys) => new()
+    {
+        Id = s.Id,
+        SubscriptionId = s.SubscriptionId,
+        SubscriptionName = s.SubscriptionName,
+        EntraIdGroup = s.EntraIdGroup,
+        TeamName = s.TeamName,
+        DateCreated = s.DateCreated,
+        PrimaryKey = keys.PrimaryKey,
+        SecondaryKey = keys.SecondaryKey
+    };
 }

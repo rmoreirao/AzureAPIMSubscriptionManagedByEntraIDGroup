@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.team-subscriptions {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #323130;
+  width: 100%;
+}
+
+.team-subscriptions__title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.team-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.team-table th,
+.team-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #edebe9;
+  vertical-align: middle;
+}
+
+.team-table th {
+  font-weight: 600;
+  color: #605e5c;
+  border-bottom: 2px solid #c8c6c4;
+}
+
+.key-value {
+  font-family: "Cascadia Code", Consolas, monospace;
+  margin-right: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #0078d4;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.btn-secondary,
+.btn-danger {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  color: #0078d4;
+  background: #fff;
+  border-color: #0078d4;
+}
+
+.btn-secondary:hover {
+  background: #f3f9fd;
+}
+
+.btn-danger {
+  color: #a4262c;
+  background: #fff;
+  border-color: #a4262c;
+}
+
+.btn-danger:hover {
+  background: #fdf3f4;
+}
+
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  font-size: 13px;
+  color: #605e5c;
+}
+
+.status {
+  margin: 0 0 10px;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.status--error {
+  color: #a4262c;
+}
+
+.status--success {
+  color: #107c10;
+}
+
+.status--info {
+  color: #605e5c;
+}

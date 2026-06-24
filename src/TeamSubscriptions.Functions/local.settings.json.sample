@@ -8,6 +8,7 @@
     "Cosmos__Container": "subscriptions",
     "Apim__SubscriptionId": "<azure-subscription-id>",
     "Apim__ResourceGroup": "<resource-group-name>",
-    "Apim__ServiceName": "<apim-service-name>"
+    "Apim__ServiceName": "<apim-service-name>",
+    "DevPortal__Url": "https://<your-apim>.developer.azure-api.net"
   }
 }

@@ -43,4 +43,16 @@ public sealed class GraphService
         await iterator.IterateAsync(ct);
         return groups;
     }
+
+    /// <summary>Returns true when the user is a direct member of the given Entra ID group.</summary>
+    public async Task<bool> IsMemberOfGroupAsync(string userId, string groupId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return false;
+        }
+
+        var groups = await GetUserGroupsAsync(userId, ct);
+        return groups.Any(g => g.Id.Equals(groupId, StringComparison.OrdinalIgnoreCase));
+    }
 }

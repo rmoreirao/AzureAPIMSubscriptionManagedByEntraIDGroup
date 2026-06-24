@@ -38,12 +38,45 @@ src/          # .NET 8 isolated Azure Functions
 
 ## Function endpoints
 
+All endpoints require the caller to be a **logged-in APIM Developer Portal user**. The custom
+widgets call the Functions directly and forward the user's APIM delegation SAS token plus the
+`xmh-*` context headers (see [Dev Portal authentication](#dev-portal-authentication)); the Functions
+reject any request that fails validation with **401**, and any cross-group access with **403**.
+
 | Method | Route | Purpose |
 |--------|-------|---------|
-| GET | `/api/users/{userId}/groups` | List the user's Entra ID groups (Graph) |
-| POST | `/api/team-subscriptions` | Create standalone APIM subscription + persist record |
-| GET | `/api/team-subscriptions?groups=g1,g2` | List subscriptions for the caller's groups |
-| POST | `/api/team-subscriptions/{entraIdGroup}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel |
+| GET | `/api/users/{userId}/groups` | List the user's Entra ID groups (Graph). Only the authenticated user may read their own groups. |
+| POST | `/api/user-subscriptions` | Create an APIM subscription owned by the authenticated caller (personal/user subscription). |
+| GET | `/api/user-subscriptions` | List the APIM subscriptions owned by the authenticated caller. |
+| POST | `/api/team-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target group. |
+| GET | `/api/team-subscriptions` | List subscriptions for the caller's groups (resolved server-side), enriched with current APIM keys. |
+| POST | `/api/team-subscriptions/{entraIdGroup}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the group that owns the subscription. |
+
+> **Note:** `GET /api/team-subscriptions` no longer accepts a `?groups=` query parameter — the
+> caller's groups are resolved from the authenticated user, so a user can only ever see subscriptions
+> for groups they belong to.
+
+### Dev Portal authentication
+
+Each request must carry:
+
+| Header | Source (custom widget `secrets`) | Purpose |
+|--------|----------------------------------|---------|
+| `Authorization` | `secrets.token` | APIM delegation SAS token (`SharedAccessSignature token="{userId}..."`) |
+| `xmh-userId` | `secrets.userId` | Dev Portal user id |
+| `xmh-managementApiUrl` | `secrets.managementApiUrl` | APIM management API resource URL |
+| `xmh-apiVersion` | `secrets.apiVersion` | APIM management API version |
+| `xmh-origin` | `secrets.parentLocation.origin` | Dev Portal origin |
+| `xmh-hostName` | `secrets.parentLocation.hostname` | Dev Portal hostname |
+
+The `RequestAuthService` (in `src/TeamSubscriptions.Functions/Security`) validates that the SAS token
+belongs to the claimed user, that the origin matches the configured Dev Portal (`DevPortal__Url`),
+and — as the decisive proof — calls the APIM **management API** with the SAS token (only APIM can
+validate a delegation token). Set `DevPortal__Url` to your portal URL (e.g.
+`https://<apim>.developer.azure-api.net`); the infra deploy sets this automatically and also adds the
+portal origin to the Function App CORS allow-list.
+
+The three custom widgets that drive these flows live in [`src/widgets`](src/widgets/README.md).
 
 ## Prerequisites
 

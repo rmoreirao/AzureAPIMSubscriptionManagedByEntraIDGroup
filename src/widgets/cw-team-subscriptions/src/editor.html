@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Subscriptions – editor</title>
+  <link rel="stylesheet" href="./styles/editor.scss" />
+  <script type="module">
+    import initialize, {onChange} from "./editor"
+
+    initialize()
+
+    window.onChange = onChange
+  </script>
+</head>
+<body>
+<fieldset class="form">
+  <div class="form-group">
+    <label class="form-label" for="title">Title</label>
+    <input id="title" class="form-control" type="text" oninput="onChange({title: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="functionBaseUrl">Function base URL</label>
+    <input id="functionBaseUrl" class="form-control" type="text"
+           oninput="onChange({functionBaseUrl: this.value})" />
+  </div>
+</fieldset>
+</body>
+</html>

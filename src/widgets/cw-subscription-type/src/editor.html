@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscription Type – editor</title>
+  <link rel="stylesheet" href="./styles/editor.scss" />
+  <script type="module">
+    import initialize, {onChange} from "./editor"
+
+    initialize()
+
+    window.onChange = onChange
+  </script>
+</head>
+<body>
+<fieldset class="form">
+  <div class="form-group">
+    <label class="form-label" for="title">Title</label>
+    <input id="title" class="form-control" type="text" oninput="onChange({title: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="userSubscriptionLabel">User subscription – label</label>
+    <input id="userSubscriptionLabel" class="form-control" type="text"
+           oninput="onChange({userSubscriptionLabel: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="userSubscriptionDescription">User subscription – description</label>
+    <input id="userSubscriptionDescription" class="form-control" type="text"
+           oninput="onChange({userSubscriptionDescription: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="userSubscriptionUrl">User subscription – target URL</label>
+    <input id="userSubscriptionUrl" class="form-control" type="text"
+           oninput="onChange({userSubscriptionUrl: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="teamSubscriptionLabel">Team subscription – label</label>
+    <input id="teamSubscriptionLabel" class="form-control" type="text"
+           oninput="onChange({teamSubscriptionLabel: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="teamSubscriptionDescription">Team subscription – description</label>
+    <input id="teamSubscriptionDescription" class="form-control" type="text"
+           oninput="onChange({teamSubscriptionDescription: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="teamSubscriptionUrl">Team subscription – target URL</label>
+    <input id="teamSubscriptionUrl" class="form-control" type="text"
+           oninput="onChange({teamSubscriptionUrl: this.value})" />
+  </div>
+</fieldset>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Subscriptions</title>
+  <link rel="stylesheet" href="./styles/app.scss" />
+  <script type="module" src="./index.ts"></script>
+</head>
+<body>
+  <div class="team-subscriptions">
+    <h3 id="title" class="team-subscriptions__title"></h3>
+    <p id="status" class="status"></p>
+    <table class="team-table">
+      <thead>
+        <tr>
+          <th>Subscription Name</th>
+          <th>Entra ID Group</th>
+          <th>Primary Key</th>
+          <th>Secondary Key</th>
+          <th>Date Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <p id="emptyState" class="empty-state" hidden>You have no team subscriptions yet.</p>
+  </div>
+</body>
+</html>

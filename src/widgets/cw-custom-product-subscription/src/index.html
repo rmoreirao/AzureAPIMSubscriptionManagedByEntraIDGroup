@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Product Subscription</title>
+  <link rel="stylesheet" href="./styles/app.scss" />
+  <script type="module" src="./index.ts"></script>
+</head>
+<body>
+  <div class="cps">
+    <!-- Step 1: choose a subscription type -->
+    <section id="chooser" class="subscription-type">
+      <h3 id="title" class="subscription-type__title"></h3>
+      <div class="subscription-type__options">
+        <button type="button" class="option-card" id="userSubscription">
+          <span class="option-card__label" id="userSubscriptionLabel"></span>
+          <span class="option-card__desc" id="userSubscriptionDescription"></span>
+        </button>
+        <button type="button" class="option-card" id="teamSubscription">
+          <span class="option-card__label" id="teamSubscriptionLabel"></span>
+          <span class="option-card__desc" id="teamSubscriptionDescription"></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Step 2a: user subscription panel (list + create) -->
+    <section id="userPanel" class="panel" hidden>
+      <button type="button" class="link-back" data-back>&larr; Back</button>
+      <h3 id="userPanelTitle" class="panel__title"></h3>
+
+      <div id="userSubList" class="user-sub-list"></div>
+
+      <form id="userForm" class="user-form">
+        <input id="userSubscriptionName" class="form-control" type="text" required
+               placeholder="Your new product subscription name" />
+        <button type="submit" id="userSubmit" class="btn-primary">Subscribe</button>
+      </form>
+      <p id="userStatus" class="status"></p>
+    </section>
+
+    <!-- Step 2b: team subscription panel -->
+    <section id="teamPanel" class="panel" hidden>
+      <button type="button" class="link-back" data-back>&larr; Back</button>
+      <h3 id="teamPanelTitle" class="panel__title"></h3>
+      <form id="teamForm" class="create-team__form">
+        <div class="form-group">
+          <label class="form-label" for="teamSubscriptionName">Subscription Name</label>
+          <input id="teamSubscriptionName" class="form-control" type="text" required
+                 placeholder="e.g. Payments API – Team A" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="entraIdGroup">Entra ID Group</label>
+          <select id="entraIdGroup" class="form-control" required>
+            <option value="" disabled selected>Loading your groups…</option>
+          </select>
+        </div>
+
+        <button type="submit" id="teamSubmit" class="btn-primary">Create Subscription</button>
+        <p id="teamStatus" class="status"></p>
+      </form>
+    </section>
+  </div>
+</body>
+</html>

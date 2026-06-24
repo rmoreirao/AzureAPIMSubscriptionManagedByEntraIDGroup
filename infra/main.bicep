@@ -33,6 +33,9 @@ var cosmosAccountName = toLower('${prefix}-cosmos-${suffix}')
 var planName = '${prefix}-plan-${suffix}'
 var functionAppName = '${prefix}-func-${suffix}'
 var apimName = '${prefix}-apim-${suffix}'
+// Developer-tier portal hostname is deterministic; computed here to avoid a circular
+// dependency (the APIM module depends on the Function App host name).
+var developerPortalUrl = 'https://${apimName}.developer.azure-api.net'
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
@@ -74,6 +77,7 @@ module functionApp 'modules/functionApp.bicep' = {
     cosmosDatabaseName: cosmos.outputs.databaseName
     cosmosContainerName: cosmos.outputs.containerName
     apimServiceName: apimName
+    devPortalUrl: developerPortalUrl
     tags: tags
   }
 }

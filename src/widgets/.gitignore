@@ -1,0 +1,9 @@
+# Node / Vite custom widget build artifacts
+node_modules/
+dist/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

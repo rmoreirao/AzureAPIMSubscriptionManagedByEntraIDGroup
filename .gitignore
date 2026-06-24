@@ -431,3 +431,5 @@ FodyWeavers.xsd
 # Local function publish artifacts
 app.zip
 publish/
+
+samples/

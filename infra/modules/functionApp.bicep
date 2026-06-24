@@ -25,6 +25,9 @@ param cosmosContainerName string
 @description('Name of the APIM service the Function manages subscriptions on.')
 param apimServiceName string
 
+@description('Base URL of the APIM Developer Portal; used to authenticate Dev Portal requests and to allow CORS.')
+param devPortalUrl string
+
 @description('Tags applied to all resources.')
 param tags object = {}
 
@@ -130,7 +133,18 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
           name: 'Apim__ServiceName'
           value: apimServiceName
         }
+        {
+          name: 'DevPortal__Url'
+          value: devPortalUrl
+        }
       ]
+      cors: {
+        // Custom widgets call the Functions directly from the Developer Portal origin.
+        allowedOrigins: [
+          devPortalUrl
+        ]
+        supportCredentials: false
+      }
     }
   }
   dependsOn: [
