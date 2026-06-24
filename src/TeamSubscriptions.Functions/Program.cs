@@ -37,7 +37,12 @@ var host = new HostBuilder()
         services.AddSingleton(apimOptions);
 
         // Keyless Cosmos DB client (RBAC data-plane via managed identity).
-        services.AddSingleton(sp => new CosmosClient(cosmosOptions.Endpoint, credential));
+        // Use System.Text.Json so [JsonPropertyName] attributes (e.g. "id") are honored;
+        // the SDK default (Newtonsoft) ignores them and Cosmos rejects the document.
+        services.AddSingleton(sp => new CosmosClient(cosmosOptions.Endpoint, credential, new CosmosClientOptions
+        {
+            Serializer = new CosmosSystemTextJsonSerializer(System.Text.Json.JsonSerializerOptions.Default)
+        }));
 
         // Keyless Microsoft Graph client (managed identity with Graph app permissions).
         services.AddSingleton(sp => new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" }));
