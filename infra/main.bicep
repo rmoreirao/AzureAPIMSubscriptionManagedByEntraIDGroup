@@ -107,3 +107,4 @@ output apimGatewayUrl string = apim.outputs.gatewayUrl
 output developerPortalUrl string = apim.outputs.developerPortalUrl
 output cosmosEndpoint string = cosmos.outputs.documentEndpoint
 output functionPrincipalId string = functionApp.outputs.functionAppPrincipalId
+// redeploy: apply explicit operations
