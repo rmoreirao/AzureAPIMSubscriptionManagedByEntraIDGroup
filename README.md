@@ -69,9 +69,26 @@ Add these **repository variables** (Settings → Secrets and variables → Actio
 
 ### 2. Grant Microsoft Graph permissions to the Function identity
 
-After the first infra deploy, grant the Function App's managed identity the Graph **application**
-permissions `GroupMember.Read.All` and `User.Read.All`, then **admin-consent** them. This step
-requires a tenant admin and cannot be done purely in Bicep.
+After the first infra deploy, grant the Function App's **system-assigned managed identity** the Graph
+**application** permissions `GroupMember.Read.All` and `User.Read.All` (required by the `GetUserGroups`
+endpoint), then **admin-consent** them. This requires a directory admin and cannot be done in Bicep.
+
+Example (run as a tenant admin; `MI_OBJECT_ID` is the Function App identity's principal/object id):
+
+```bash
+MI_OBJECT_ID=$(az functionapp identity show -g <rg> -n <function-app> --query principalId -o tsv)
+GRAPH_SP_ID=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query id -o tsv)
+
+# App role ids: GroupMember.Read.All = 98830695-27a2-44f7-8c18-0c3ebc9698f6
+#               User.Read.All        = df021288-bdef-4463-88db-98f22de89214
+for ROLE in 98830695-27a2-44f7-8c18-0c3ebc9698f6 df021288-bdef-4463-88db-98f22de89214; do
+  az rest --method POST \
+    --url "https://graph.microsoft.com/v1.0/servicePrincipals/$MI_OBJECT_ID/appRoleAssignments" \
+    --body "{\"principalId\":\"$MI_OBJECT_ID\",\"resourceId\":\"$GRAPH_SP_ID\",\"appRoleId\":\"$ROLE\"}"
+done
+```
+
+After granting, restart the Function App so its managed-identity token picks up the new roles.
 
 ## Deploy
 
@@ -81,6 +98,23 @@ Deployment is split into two workflows, both triggered on push to `main` (or via
 1. **deploy-infra.yml** — provisions all Azure resources with Bicep.
    > ⚠️ The Developer-tier APIM service takes ~30–45 minutes to provision on first run.
 2. **deploy-app.yml** — builds and zip-deploys the Function App.
+
+### Deployment notes & environment constraints
+
+These reflect choices validated against a Microsoft-internal sponsored (MCAP) subscription; adjust for your own:
+
+- **OIDC via User-Assigned Managed Identity** — if your tenant blocks app registrations
+  (`ServiceManagementReference` required), use a UAMI with a federated credential
+  (subject `repo:<owner>/<repo>:environment:dev`) instead of an app registration. `azure/login`
+  works with either.
+- **Region** — defaults to `northeurope` (West Europe had Cosmos zonal capacity constraints at deploy time).
+- **Function hosting** — uses **Flex Consumption (FC1)**. Consumption (Y1) and Dedicated (B1) plans require
+  `Microsoft.Web` "Total VMs" quota, which is 0 on some sponsored subscriptions.
+- **Keyless storage** — the storage account has `allowSharedKeyAccess=false` (often enforced by policy),
+  so the Function uses identity-based storage (`AzureWebJobsStorage__blobServiceUri` + deployment storage
+  via `SystemAssignedIdentity`). The Function MI is granted Storage Blob Data Owner + Queue Data Contributor.
+- **APIM operations** — the API uses **explicit operations** (not a `/*` wildcard, which did not match at
+  the gateway). `subscriptionRequired` is `false` for the management API.
 
 ### Local development
 
