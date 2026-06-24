@@ -60,15 +60,69 @@ resource api 'Microsoft.ApiManagement/service/apis@2023-09-01-preview' = {
   }
 }
 
-resource wildcardOperation 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = {
-  parent: api
-  name: 'all'
-  properties: {
-    displayName: 'All operations'
-    method: '*'
-    urlTemplate: '/*'
+var operations = [
+  {
+    name: 'get-team-subscriptions'
+    displayName: 'List Team Subscriptions'
+    method: 'GET'
+    urlTemplate: '/team-subscriptions'
+    templateParameters: []
   }
-}
+  {
+    name: 'save-team-subscription'
+    displayName: 'Save Team Subscription'
+    method: 'POST'
+    urlTemplate: '/team-subscriptions'
+    templateParameters: []
+  }
+  {
+    name: 'get-user-groups'
+    displayName: 'Get User Groups'
+    method: 'GET'
+    urlTemplate: '/users/{userId}/groups'
+    templateParameters: [
+      {
+        name: 'userId'
+        type: 'string'
+        required: true
+      }
+    ]
+  }
+  {
+    name: 'manage-team-subscription'
+    displayName: 'Manage Team Subscription'
+    method: 'POST'
+    urlTemplate: '/team-subscriptions/{entraIdGroup}/{subscriptionId}/{action}'
+    templateParameters: [
+      {
+        name: 'entraIdGroup'
+        type: 'string'
+        required: true
+      }
+      {
+        name: 'subscriptionId'
+        type: 'string'
+        required: true
+      }
+      {
+        name: 'action'
+        type: 'string'
+        required: true
+      }
+    ]
+  }
+]
+
+resource apiOperations 'Microsoft.ApiManagement/service/apis/operations@2023-09-01-preview' = [for op in operations: {
+  parent: api
+  name: op.name
+  properties: {
+    displayName: op.displayName
+    method: op.method
+    urlTemplate: op.urlTemplate
+    templateParameters: op.templateParameters
+  }
+}]
 
 var managedIdentitySnippet = empty(functionAuthResource)
   ? ''
@@ -82,7 +136,7 @@ resource apiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-09-01-pre
     value: '<policies><inbound><base />${managedIdentitySnippet}<set-backend-service backend-id="${backend.name}" /></inbound><backend><base /></backend><outbound><base /></outbound><on-error><base /></on-error></policies>'
   }
   dependsOn: [
-    wildcardOperation
+    apiOperations
   ]
 }
 
