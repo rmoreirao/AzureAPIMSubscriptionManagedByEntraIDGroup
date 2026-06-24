@@ -39,12 +39,12 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ vars.AZURE_CLIENT_ID || '0f441d5a-6948-438f-a66f-6b27972fb414' }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID || 'b9e20f22-cdf3-4d31-9628-2e615edcddb1' }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || 'b0dfd5b3-9f3c-4fb5-ae5e-0e7f81eab970' }}
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
           package: ${{ env.PUBLISH_DIR }}
