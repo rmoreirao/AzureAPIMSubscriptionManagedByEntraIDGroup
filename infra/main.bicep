@@ -97,6 +97,7 @@ module rbac 'modules/rbac.bicep' = {
     functionPrincipalId: functionApp.outputs.functionAppPrincipalId
     apimName: apim.outputs.apimName
     cosmosAccountName: cosmos.outputs.accountName
+    storageAccountName: storage.outputs.storageAccountName
   }
 }
 

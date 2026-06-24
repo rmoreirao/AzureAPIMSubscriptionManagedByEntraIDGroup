@@ -52,7 +52,9 @@ resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   }
 }
 
-var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}'
+var storageBlobUri = storage.properties.primaryEndpoints.blob
+var storageQueueUri = storage.properties.primaryEndpoints.queue
+var storageTableUri = storage.properties.primaryEndpoints.table
 
 resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   name: functionAppName
@@ -69,10 +71,9 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
       deployment: {
         storage: {
           type: 'blobContainer'
-          value: '${storage.properties.primaryEndpoints.blob}${deploymentContainerName}'
+          value: '${storageBlobUri}${deploymentContainerName}'
           authentication: {
-            type: 'StorageAccountConnectionString'
-            storageAccountConnectionStringName: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+            type: 'SystemAssignedIdentity'
           }
         }
       }
@@ -90,12 +91,16 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
       minTlsVersion: '1.2'
       appSettings: [
         {
-          name: 'AzureWebJobsStorage'
-          value: storageConnectionString
+          name: 'AzureWebJobsStorage__blobServiceUri'
+          value: storageBlobUri
         }
         {
-          name: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
-          value: storageConnectionString
+          name: 'AzureWebJobsStorage__queueServiceUri'
+          value: storageQueueUri
+        }
+        {
+          name: 'AzureWebJobsStorage__tableServiceUri'
+          value: storageTableUri
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
