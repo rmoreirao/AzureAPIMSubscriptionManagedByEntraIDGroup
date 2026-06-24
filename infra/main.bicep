@@ -1,5 +1,7 @@
 targetScope = 'resourceGroup'
 
+// Region: northeurope (westeurope had Cosmos capacity constraints).
+
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
 
