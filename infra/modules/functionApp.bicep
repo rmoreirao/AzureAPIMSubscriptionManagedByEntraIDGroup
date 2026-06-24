@@ -1,7 +1,7 @@
 @description('Azure region for the Function App.')
 param location string
 
-@description('Name of the consumption hosting plan.')
+@description('Name of the Flex Consumption hosting plan.')
 param planName string
 
 @description('Name of the Function App.')
@@ -28,8 +28,14 @@ param apimServiceName string
 @description('Tags applied to all resources.')
 param tags object = {}
 
+var deploymentContainerName = 'deploymentpackage'
+
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
+}
+
+resource deploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  name: '${storageAccountName}/default/${deploymentContainerName}'
 }
 
 resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -37,14 +43,16 @@ resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   location: location
   tags: tags
   sku: {
-    name: 'B1'
-    tier: 'Basic'
+    name: 'FC1'
+    tier: 'FlexConsumption'
   }
-  kind: 'linux'
+  kind: 'functionapp'
   properties: {
     reserved: true
   }
 }
+
+var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}'
 
 resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   name: functionAppName
@@ -57,23 +65,37 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   properties: {
     serverFarmId: plan.id
     httpsOnly: true
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${storage.properties.primaryEndpoints.blob}${deploymentContainerName}'
+          authentication: {
+            type: 'StorageAccountConnectionString'
+            storageAccountConnectionStringName: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: 40
+        instanceMemoryMB: 2048
+      }
+      runtime: {
+        name: 'dotnet-isolated'
+        version: '8.0'
+      }
+    }
     siteConfig: {
-      linuxFxVersion: 'DOTNET-ISOLATED|8.0'
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
-      alwaysOn: true
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storage.listKeys().keys[0].value}'
+          value: storageConnectionString
         }
         {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet-isolated'
+          name: 'DEPLOYMENT_STORAGE_CONNECTION_STRING'
+          value: storageConnectionString
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
@@ -106,6 +128,9 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
       ]
     }
   }
+  dependsOn: [
+    deploymentContainer
+  ]
 }
 
 output functionAppName string = functionApp.name
