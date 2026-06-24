@@ -8,10 +8,15 @@ headers so the Functions can confirm the request comes from a valid Dev Portal u
 
 | Widget | Folder | Flow | Backend calls |
 |--------|--------|------|---------------|
-| **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows the *User Subscription* / *Team Subscription* chooser, then swaps (via JS, no redirects) to either the user panel (lists the caller's subscriptions + create form) or the team-subscription create form. A *Back* link returns to the chooser. | `GET`/`POST /user-subscriptions`, `GET /users/{userId}/groups`, `POST /team-subscriptions` |
+| **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows the *User Subscription* / *Team Subscription* chooser, then swaps (via JS, no redirects) to either the user panel (lists the caller's subscriptions + create form) or the team-subscription create form. A *Back* link returns to the chooser. | `GET`/`POST /user-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
 | **Subscription Type** | `cw-subscription-type` | Lets the user choose *User Subscription* vs *Team Subscription* and navigates accordingly. | none (navigation only) |
-| **Create Team Subscription** | `cw-create-team-subscription` | Form: *Subscription Name* + *Entra ID Group* (populated with the caller's groups). Creates a standalone APIM subscription bound to the group. | `GET /users/{userId}/groups`, `POST /team-subscriptions` |
-| **Teams Subscriptions** | `cw-team-subscriptions` | Lists the caller's team subscriptions (Name, Entra ID Group, Primary/Secondary Key, Date Created) with *Regenerate Keys* and *Cancel* actions. | `GET /team-subscriptions`, `POST /team-subscriptions/{group}/{subId}/{regenerate\|cancel}` |
+| **Create Team Subscription** | `cw-create-team-subscription` | Form: *Subscription Name* + *APIM Group* (populated with the caller's groups). Creates a standalone APIM subscription bound to the group. | `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
+| **Teams Subscriptions** | `cw-team-subscriptions` | Lists the caller's team subscriptions (Name, APIM Group, Primary/Secondary Key, Date Created) with *Regenerate Keys* and *Cancel* actions. | `GET /apim/team-subscriptions`, `POST /apim/team-subscriptions/{group}/{subId}/{regenerate\|cancel}` |
+
+> The team-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
+> membership from the APIM Groups rather than Entra ID (the Dev Portal is not yet federated with Entra
+> ID). The equivalent Entra-ID endpoints (`/users/{userId}/groups`, `/team-subscriptions`) still exist
+> on the backend and are unchanged.
 
 > **`cw-custom-product-subscription`** merges the navigation-only `cw-subscription-type` and the
 > `cw-create-team-subscription` flows into a single widget that shows/hides its panels with JavaScript

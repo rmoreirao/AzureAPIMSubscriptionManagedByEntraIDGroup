@@ -56,6 +56,27 @@ reject any request that fails validation with **401**, and any cross-group acces
 > caller's groups are resolved from the authenticated user, so a user can only ever see subscriptions
 > for groups they belong to.
 
+### APIM-group endpoints (Dev Portal not yet connected to Entra ID)
+
+A parallel set of endpoints resolves group membership from the **APIM Groups** (built-in
+`Administrators`/`Developers`/`Guests` plus any custom groups such as `Team1`/`Team2`/`Team3`)
+instead of Entra ID. Use these when the Developer Portal is **not** federated with Entra ID. They are
+backed by new `…Apim` Functions and an `ApimGroupService` that calls the APIM control plane via the
+Function's managed identity (which already holds *API Management Service Contributor*) — no Graph
+permissions required. The existing Entra-ID endpoints above are unchanged.
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| GET | `/api/apim/users/{userId}/groups` | List the user's **APIM** groups. Only the authenticated user may read their own groups. |
+| POST | `/api/apim/team-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target APIM group. |
+| GET | `/api/apim/team-subscriptions` | List subscriptions for the caller's APIM groups (resolved server-side), enriched with current APIM keys. |
+| POST | `/api/apim/team-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the APIM group that owns the subscription. |
+
+> Both endpoint families share the same Cosmos container; the group identifier (an APIM group id like
+> `Team1`, or an Entra group id) is stored opaquely in the record's group field. The custom widgets
+> point at the `/api/apim/...` endpoints.
+
+
 ### Dev Portal authentication
 
 Each request must carry:

@@ -19,7 +19,19 @@ export function createApiClient(secrets: Secrets, functionBaseUrl: string) {
     headers.set("xmh-origin", secrets.parentLocation.origin)
     headers.set("xmh-hostName", secrets.parentLocation.hostname)
 
-    return fetch(`${base}${path}`, {...init, headers})
+    const url = `${base}${path}`
+    try {
+      return await fetch(url, {...init, headers})
+    } catch (error) {
+      // A malformed base URL (e.g. the unconfigured placeholder "https://<app>.azurewebsites.net/api")
+      // makes fetch throw synchronously with no entry in the Network tab. Surface it clearly.
+      console.error(
+        `[cw-custom-product-subscription] fetch failed for ${init.method ?? "GET"} ${url}. ` +
+          "Check the widget's 'functionBaseUrl' editor value and the Function App CORS settings.",
+        error
+      )
+      throw error
+    }
   }
 }
 

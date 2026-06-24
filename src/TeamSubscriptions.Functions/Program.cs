@@ -59,6 +59,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<CosmosRepository>();
         services.AddSingleton<GraphService>();
+        services.AddSingleton<ApimGroupService>();
         services.AddSingleton<ApimManagementService>();
 
         // Dev Portal request authentication (validates the caller is a logged-in APIM Dev Portal user).

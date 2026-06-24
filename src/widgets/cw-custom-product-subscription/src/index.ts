@@ -14,6 +14,48 @@ type UserSubscription = {
 
 type StatusKind = "info" | "error" | "success"
 
+const LOG_PREFIX = "[cw-custom-product-subscription]"
+
+function logInfo(message: string, ...details: unknown[]): void {
+  console.info(`${LOG_PREFIX} ${message}`, ...details)
+}
+
+function logError(message: string, error: unknown): void {
+  console.error(`${LOG_PREFIX} ${message}`, error)
+}
+
+/** Returns a short, user-displayable description of an error. */
+function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
+/** Reads a response body for diagnostics without throwing. */
+async function readBodySafe(response: Response): Promise<string> {
+  try {
+    return await response.text()
+  } catch {
+    return "<unreadable body>"
+  }
+}
+
+/**
+ * Returns true when the configured Function base URL looks usable. The default placeholder contains
+ * `<...>` which makes `fetch` throw synchronously (no network request, no console error), so we
+ * detect and report it explicitly.
+ */
+function isFunctionBaseUrlConfigured(functionBaseUrl: string): boolean {
+  if (!functionBaseUrl) return false
+  if (functionBaseUrl.includes("<") || functionBaseUrl.includes(">")) return false
+  try {
+    // eslint-disable-next-line no-new
+    new URL(functionBaseUrl)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function setText(id: string, text: string): void {
   const el = document.getElementById(id)
   if (el) el.innerText = text
@@ -38,6 +80,25 @@ async function main(): Promise<void> {
   const values = getValues(valuesDefault)
   const secrets = await askForSecrets("app")
   const apiFetch = createApiClient(secrets, values.functionBaseUrl)
+
+  logInfo("Widget initialized", {
+    functionBaseUrl: values.functionBaseUrl,
+    scope: values.scope,
+    userId: secrets.userId,
+    hasToken: Boolean(secrets.token),
+    managementApiUrl: secrets.managementApiUrl,
+    origin: secrets.parentLocation?.origin,
+  })
+
+  const baseUrlConfigured = isFunctionBaseUrlConfigured(values.functionBaseUrl)
+  if (!baseUrlConfigured) {
+    logError(
+      "Function base URL is not configured. Set the widget's 'functionBaseUrl' editor value to the " +
+        "deployed Function App API base (e.g. https://<app>.azurewebsites.net/api). The current value " +
+        "is not a valid URL, so fetch() throws before any network request is made.",
+      values.functionBaseUrl
+    )
+  }
 
   // --- Step 1: chooser labels ---
   setText("title", values.title)
@@ -93,11 +154,18 @@ async function loadUserSubscriptions(apiFetch: ApiFetch): Promise<void> {
   if (!list) return
   list.innerHTML = `<p class="user-sub-empty">Loading your subscriptions…</p>`
   try {
+    logInfo("GET /user-subscriptions")
     const response = await apiFetch("/user-subscriptions")
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    logInfo("GET /user-subscriptions response", {status: response.status, ok: response.ok})
+    if (!response.ok) {
+      const body = await readBodySafe(response)
+      throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+    }
     const subscriptions: UserSubscription[] = await response.json()
+    logInfo("GET /user-subscriptions returned subscriptions", subscriptions)
     renderUserSubscriptions(list, subscriptions)
-  } catch {
+  } catch (error) {
+    logError("Failed to load user subscriptions", error)
     list.innerHTML = `<p class="user-sub-empty">Failed to load your subscriptions.</p>`
   }
 }
@@ -147,17 +215,23 @@ function setupUserPanel(apiFetch: ApiFetch, scope: string): void {
     if (submitButton) submitButton.disabled = true
     setStatus("userStatus", "Creating subscription…")
     try {
+      logInfo("POST /user-subscriptions", {subscriptionName, scope})
       const response = await apiFetch("/user-subscriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({subscriptionName, scope}),
       })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      logInfo("POST /user-subscriptions response", {status: response.status, ok: response.ok})
+      if (!response.ok) {
+        const body = await readBodySafe(response)
+        throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+      }
       setStatus("userStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
       await loadUserSubscriptions(apiFetch)
-    } catch {
-      setStatus("userStatus", "Failed to create the subscription.", "error")
+    } catch (error) {
+      logError("Failed to create user subscription", error)
+      setStatus("userStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
     } finally {
       if (submitButton) submitButton.disabled = false
     }
@@ -165,7 +239,7 @@ function setupUserPanel(apiFetch: ApiFetch, scope: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Team subscription panel: pick an Entra ID group + create form.
+// Team subscription panel: pick an APIM group + create form.
 // ---------------------------------------------------------------------------
 async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
   const groupSelect = document.getElementById("entraIdGroup") as HTMLSelectElement | null
@@ -176,13 +250,18 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
   }
 
   try {
-    const response = await apiFetch(`/users/${encodeURIComponent(userId)}/groups`)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    logInfo("GET /apim/users/{userId}/groups", {userId})
+    const response = await apiFetch(`/apim/users/${encodeURIComponent(userId)}/groups`)
+    logInfo("GET groups response", {status: response.status, ok: response.ok})
+    if (!response.ok) {
+      const body = await readBodySafe(response)
+      throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+    }
     const groups: EntraGroup[] = await response.json()
     if (groupSelect) {
       groupSelect.innerHTML = ""
       if (groups.length === 0) {
-        setStatus("teamStatus", "You are not a member of any Entra ID group.", "error")
+        setStatus("teamStatus", "You are not a member of any APIM group.", "error")
       }
       for (const group of groups) {
         const option = document.createElement("option")
@@ -191,8 +270,9 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
         groupSelect.appendChild(option)
       }
     }
-  } catch {
-    setStatus("teamStatus", "Failed to load your Entra ID groups.", "error")
+  } catch (error) {
+    logError("Failed to load APIM groups", error)
+    setStatus("teamStatus", `Failed to load your APIM groups: ${describeError(error)}`, "error")
   }
 }
 
@@ -215,16 +295,22 @@ function setupTeamPanel(apiFetch: ApiFetch, scope: string): void {
     setStatus("teamStatus", "Creating subscription…")
     try {
       const teamName = groupSelect?.selectedOptions[0]?.textContent ?? ""
-      const response = await apiFetch("/team-subscriptions", {
+      logInfo("POST /apim/team-subscriptions", {subscriptionName, entraIdGroup, teamName, scope})
+      const response = await apiFetch("/apim/team-subscriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({subscriptionName, entraIdGroup, teamName, scope}),
       })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      logInfo("POST /apim/team-subscriptions response", {status: response.status, ok: response.ok})
+      if (!response.ok) {
+        const body = await readBodySafe(response)
+        throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+      }
       setStatus("teamStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
-    } catch {
-      setStatus("teamStatus", "Failed to create the subscription.", "error")
+    } catch (error) {
+      logError("Failed to create team subscription", error)
+      setStatus("teamStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
     } finally {
       if (submitButton) submitButton.disabled = false
     }

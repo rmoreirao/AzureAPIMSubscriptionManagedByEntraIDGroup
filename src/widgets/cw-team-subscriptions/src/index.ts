@@ -90,7 +90,7 @@ async function main(): Promise<void> {
       el("td", {className: "actions"}, [regenerateBtn, cancelBtn]),
     ])
 
-    const basePath = `/team-subscriptions/${encodeURIComponent(item.entraIdGroup)}/${encodeURIComponent(item.subscriptionId)}`
+    const basePath = `/apim/team-subscriptions/${encodeURIComponent(item.entraIdGroup)}/${encodeURIComponent(item.subscriptionId)}`
 
     regenerateBtn.addEventListener("click", async () => {
       regenerateBtn.disabled = true
@@ -132,7 +132,7 @@ async function main(): Promise<void> {
 
   setStatus("Loading team subscriptions…")
   try {
-    const response = await apiFetch("/team-subscriptions")
+    const response = await apiFetch("/apim/team-subscriptions")
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const items: TeamSubscriptionView[] = await response.json()
 

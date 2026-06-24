@@ -35,15 +35,15 @@ async function main(): Promise<void> {
     return
   }
 
-  // Populate the Entra ID Group dropdown with the caller's current groups.
+  // Populate the APIM Group dropdown with the caller's current groups.
   try {
-    const response = await apiFetch(`/users/${encodeURIComponent(secrets.userId)}/groups`)
+    const response = await apiFetch(`/apim/users/${encodeURIComponent(secrets.userId)}/groups`)
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const groups: EntraGroup[] = await response.json()
     if (groupSelect) {
       groupSelect.innerHTML = ""
       if (groups.length === 0) {
-        setStatus("You are not a member of any Entra ID group.", "error")
+        setStatus("You are not a member of any APIM group.", "error")
       }
       for (const group of groups) {
         const option = document.createElement("option")
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       }
     }
   } catch {
-    setStatus("Failed to load your Entra ID groups.", "error")
+    setStatus("Failed to load your APIM groups.", "error")
     return
   }
 
@@ -70,7 +70,7 @@ async function main(): Promise<void> {
     setStatus("Creating subscription…")
     try {
       const teamName = groupSelect?.selectedOptions[0]?.textContent ?? ""
-      const response = await apiFetch("/team-subscriptions", {
+      const response = await apiFetch("/apim/team-subscriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({subscriptionName, entraIdGroup, teamName, scope: values.scope}),

@@ -15,9 +15,9 @@ export const valuesDefault: Readonly<Values> = Object.freeze({
   userSubscriptionLabel: "User Subscription",
   userSubscriptionDescription: "A personal subscription tied to your own account.",
   teamSubscriptionLabel: "Team Subscription",
-  teamSubscriptionDescription: "A shared subscription managed by an Entra ID group.",
+  teamSubscriptionDescription: "A shared subscription managed by an APIM group.",
   userPanelTitle: "Your subscriptions",
   teamPanelTitle: "Create Team Subscription",
-  functionBaseUrl: "https://<your-function-app>.azurewebsites.net/api",
+  functionBaseUrl: "https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api",
   scope: "/apis",
 })
