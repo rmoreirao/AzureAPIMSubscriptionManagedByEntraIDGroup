@@ -81,6 +81,8 @@ public sealed class SaveTeamSubscriptionApim
             subscription = record,
             keys
         }, ct);
+        // WriteAsJsonAsync resets the status to 200 OK, so re-assert 201 Created.
+        response.StatusCode = HttpStatusCode.Created;
         return response;
     }
 }

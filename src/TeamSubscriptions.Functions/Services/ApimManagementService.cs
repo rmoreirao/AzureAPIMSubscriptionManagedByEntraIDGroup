@@ -30,6 +30,16 @@ public sealed class ApimManagementService
         return _arm.GetApiManagementServiceResource(id);
     }
 
+    /// <summary>
+    /// True when an APIM subscription's owner is the given Dev Portal user. APIM returns
+    /// <c>OwnerId</c> as the <b>full</b> ARM resource id
+    /// (<c>/subscriptions/.../service/{apim}/users/{userId}</c>), even though it is created from the
+    /// relative <c>/users/{userId}</c> — so we match on the trailing segment rather than by equality.
+    /// </summary>
+    private static bool OwnerMatches(string? ownerId, string userId) =>
+        !string.IsNullOrEmpty(ownerId) &&
+        ownerId.TrimEnd('/').EndsWith($"/users/{userId}", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Creates a standalone APIM subscription and returns its id + keys.</summary>
     public async Task<(string SubscriptionId, SubscriptionKeys Keys)> CreateSubscriptionAsync(
         string subscriptionId,
@@ -91,13 +101,12 @@ public sealed class ApimManagementService
     {
         var service = GetService();
         var collection = service.GetApiManagementSubscriptions();
-        var ownerId = $"/users/{userId}";
 
         var views = new List<UserSubscriptionView>();
         await foreach (var subscription in collection.GetAllAsync(cancellationToken: ct))
         {
             var data = subscription.Data;
-            if (!string.Equals(data.OwnerId, ownerId, StringComparison.OrdinalIgnoreCase))
+            if (!OwnerMatches(data.OwnerId, userId))
             {
                 continue;
             }
@@ -130,7 +139,7 @@ public sealed class ApimManagementService
         try
         {
             var subscription = await GetSubscriptionAsync(subscriptionId, ct);
-            return string.Equals(subscription.Data.OwnerId, $"/users/{userId}", StringComparison.OrdinalIgnoreCase);
+            return OwnerMatches(subscription.Data.OwnerId, userId);
         }
         catch (RequestFailedException)
         {

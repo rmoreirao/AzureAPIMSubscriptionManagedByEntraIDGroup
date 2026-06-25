@@ -61,6 +61,8 @@ public sealed class SaveUserSubscription
 
         var response = req.CreateResponse(HttpStatusCode.Created);
         await response.WriteAsJsonAsync(view, ct);
+        // WriteAsJsonAsync resets the status to 200 OK, so re-assert 201 Created.
+        response.StatusCode = HttpStatusCode.Created;
         return response;
     }
 }

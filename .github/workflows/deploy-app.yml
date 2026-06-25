@@ -44,7 +44,40 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || 'b0dfd5b3-9f3c-4fb5-ae5e-0e7f81eab970' }}
 
       - name: Deploy to Azure Functions
+        id: deploy
+        continue-on-error: true
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
           package: ${{ env.PUBLISH_DIR }}
+
+      - name: Retry deploy (flaky FC1 storage check)
+        if: steps.deploy.outcome == 'failure'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
+          package: ${{ env.PUBLISH_DIR }}
+
+      - name: Post-deploy health gate
+        env:
+          APP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
+          RG_NAME: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-apimteam-dev' }}
+        run: |
+          set -euo pipefail
+          # A failed/flaky Flex-Consumption deploy can leave the host returning 503. Restart and
+          # poll until the host responds (200/401 = up); fail the job if it never recovers so a
+          # broken deploy can't silently leave the app down.
+          az functionapp restart -g "$RG_NAME" -n "$APP_NAME"
+          url="https://$APP_NAME.azurewebsites.net/admin/host/status"
+          ok=0
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$url" || echo 000)
+            echo "Health attempt $i: HTTP $code"
+            if [ "$code" = "200" ] || [ "$code" = "401" ]; then ok=1; break; fi
+            sleep 15
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::Function host did not become healthy after deploy."
+            exit 1
+          fi
+          echo "Function host is healthy."

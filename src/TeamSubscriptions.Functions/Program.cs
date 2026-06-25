@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Azure.Core;
+using Azure.Core.Serialization;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Microsoft.Azure.Cosmos;
@@ -20,6 +22,14 @@ var host = new HostBuilder()
     .ConfigureServices((context, services) =>
     {
         IConfiguration config = context.Configuration;
+
+        // Serialize HTTP responses as camelCase (Web defaults) so the custom Dev Portal widgets,
+        // which read camelCase fields (e.g. subscriptionName, state, primaryKey), bind correctly.
+        // Reads stay case-insensitive, so the camelCase request bodies the widgets send still bind.
+        services.Configure<WorkerOptions>(options =>
+        {
+            options.Serializer = new JsonObjectSerializer(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        });
 
         // Single keyless credential reused for every Azure service-to-service call.
         TokenCredential credential = new DefaultAzureCredential();
