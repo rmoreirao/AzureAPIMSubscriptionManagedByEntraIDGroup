@@ -52,7 +52,7 @@ Each widget exposes editor values configured in the Dev Portal admin:
 - **Teams Subscriptions** — `functionBaseUrl` and title.
 
 `functionBaseUrl` is the deployed Function App API base, e.g.
-`https://<function-app>.azurewebsites.net/api`. The Function App must allow the Dev Portal origin in
+`https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api`. The Function App must allow the Dev Portal origin in
 its CORS settings (configured automatically by the Bicep infra).
 
 ## Develop & deploy
