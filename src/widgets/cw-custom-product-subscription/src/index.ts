@@ -40,6 +40,26 @@ async function readBodySafe(response: Response): Promise<string> {
 }
 
 /**
+ * Derives the APIM subscription scope from the Dev Portal product page the widget is hosted on.
+ *
+ * The portal forwards its own `window.location` as `secrets.parentLocation`, and a product details
+ * page is addressed via the hash fragment `#product={productId}` (e.g.
+ * `/product#product=starter`). When a product id is present we scope the subscription to that
+ * product (`/products/{productId}`); otherwise we fall back to the editor-configured `scope`
+ * (default `/apis` = all APIs) so the widget still works on non-product pages.
+ */
+function resolveProductScope(href: string | undefined, fallbackScope: string): string {
+  if (href) {
+    const hashIndex = href.indexOf("#")
+    if (hashIndex >= 0) {
+      const productId = new URLSearchParams(href.slice(hashIndex + 1)).get("product")
+      if (productId) return `/products/${productId}`
+    }
+  }
+  return fallbackScope
+}
+
+/**
  * Returns true when the configured Function base URL looks usable. The default placeholder contains
  * `<...>` which makes `fetch` throw synchronously (no network request, no console error), so we
  * detect and report it explicitly.
@@ -100,6 +120,12 @@ async function main(): Promise<void> {
     )
   }
 
+  // Scope new subscriptions to the product whose Dev Portal page hosts this widget
+  // (parentLocation hash `#product={id}` → `/products/{id}`), falling back to the editor value.
+  const scope = resolveProductScope(secrets.parentLocation?.href, values.scope)
+  logInfo("Resolved subscription scope", {parentHref: secrets.parentLocation?.href, scope})
+
+
   // --- Step 1: chooser labels ---
   setText("title", values.title)
   setText("userSubscriptionLabel", values.userSubscriptionLabel)
@@ -142,8 +168,8 @@ async function main(): Promise<void> {
     button.addEventListener("click", () => showChooser())
   })
 
-  setupUserPanel(apiFetch, values.scope)
-  setupTeamPanel(apiFetch, values.scope)
+  setupUserPanel(apiFetch, scope)
+  setupTeamPanel(apiFetch, scope)
 }
 
 // ---------------------------------------------------------------------------

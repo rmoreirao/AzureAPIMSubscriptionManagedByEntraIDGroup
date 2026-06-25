@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Option 2 — Progressive disclosure</title>
+  <style>
+    :root { --blue:#0078d4; --blue-dark:#106ebe; --ink:#323130; --muted:#605e5c; --line:#e1dfdd; }
+    * { box-sizing: border-box; }
+    body { margin:0; padding:40px 24px; background:#faf9f8;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+    .stage { max-width:520px; margin:0 auto; }
+    .back { display:inline-block; font-size:13px; color:var(--blue); text-decoration:none; margin-bottom:18px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:22px 24px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    h2 { font-size:18px; margin:0 0 4px; }
+    .hint { font-size:13px; color:var(--muted); margin:0 0 18px; }
+
+    .subs { margin:0 0 4px; }
+    .subs-head { display:flex; align-items:baseline; justify-content:space-between; margin:0 0 10px; }
+    .subs-head h3 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0; }
+    .subs-count { font-size:12px; color:var(--muted); }
+    .sub-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .sub-card { border:1px solid var(--line); border-radius:8px; padding:12px 14px; background:#fff;
+      display:flex; flex-direction:column; gap:6px; transition:border-color .15s, box-shadow .15s; }
+    .sub-card:hover { border-color:#c7c6c4; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .sub-card .top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .sub-card .name { font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sub-card .meta { font-size:12px; color:var(--muted); }
+    .dot { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:#0b6a0b; }
+    .dot::before { content:""; width:7px; height:7px; border-radius:50%; background:#0b6a0b; }
+    .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+    .pill.user { color:#5c2e91; background:#f3eefb; } .pill.team { color:#0b6a0b; background:#eafaea; }
+    @media (max-width:520px){ .sub-grid{ grid-template-columns:1fr; } }
+
+    .divider { display:flex; align-items:center; gap:12px; margin:22px 0 16px; color:var(--ink); font-size:14px; font-weight:600; }
+    .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
+
+    label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; }
+    .control { width:100%; padding:9px 11px; font-size:14px; border:1px solid #8a8886; border-radius:6px; background:#fff; }
+    .control:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+    .field { margin-bottom:16px; }
+
+    /* toggle switch row */
+    .switch-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:#fafafa; margin-bottom:8px; }
+    .switch-row .txt b { font-size:14px; } .switch-row .txt small { display:block; font-size:12px; color:var(--muted); }
+    .switch { position:relative; width:42px; height:24px; flex:0 0 auto; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; inset:0; background:#c8c6c4; border-radius:999px; transition:.2s; cursor:pointer; }
+    .slider:before { content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+    .switch input:checked + .slider { background:var(--blue); }
+    .switch input:checked + .slider:before { transform:translateX(18px); }
+
+    .reveal { overflow:hidden; max-height:0; opacity:0; transition:max-height .25s ease, opacity .25s ease, margin .25s ease; margin:0; }
+    .reveal.open { max-height:120px; opacity:1; margin:0 0 16px; }
+
+    .btn { width:100%; padding:10px 16px; font-size:14px; font-weight:600; color:#fff; background:var(--blue);
+      border:none; border-radius:6px; cursor:pointer; }
+    .btn:hover { background:var(--blue-dark); }
+    .status { font-size:13px; margin:12px 0 0; min-height:18px; }
+    .status.ok { color:#107c10; } .status.err { color:#a4262c; }
+    .note { max-width:520px; margin:18px auto 0; font-size:12px; color:var(--muted); text-align:center; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="./index.html">&larr; All options</a>
+    <div class="card">
+      <h2>Your subscriptions</h2>
+      <p class="hint">Manage your existing subscriptions, or create a new one below.</p>
+
+      <div class="subs" id="subs"></div>
+
+      <div class="divider">Create a new subscription</div>
+
+      <form id="form">
+        <div class="field">
+          <label for="name">Subscription name</label>
+          <input id="name" class="control" type="text" placeholder="Your new product subscription name" />
+        </div>
+
+        <div class="switch-row">
+          <span class="txt"><b>Share with a team</b><small>Managed by an APIM group instead of just you.</small></span>
+          <label class="switch"><input type="checkbox" id="teamToggle" /><span class="slider"></span></label>
+        </div>
+
+        <div class="reveal" id="reveal">
+          <div style="height:8px"></div>
+          <label for="group">APIM group</label>
+          <select id="group" class="control"></select>
+        </div>
+
+        <button class="btn" type="submit" id="submit">Subscribe</button>
+        <p class="status" id="status"></p>
+      </form>
+    </div>
+    <p class="note">Option 2 · Progressive disclosure — team fields appear only when needed.</p>
+  </div>
+
+  <script>
+    const groups = [{id:"g1",name:"Payments Team"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
+    let subscriptions = [
+      { name:"Payments API – Prod", meta:"Scope: /apis · Created Jun 12", type:"user" },
+      { name:"Checkout – Team A", meta:"Payments Team · Created Jun 18", type:"team" },
+    ];
+    const $ = id => document.getElementById(id);
+
+    function renderSubs() {
+      const el = $("subs");
+      const cards = subscriptions.map(s => `
+        <div class="sub-card">
+          <div class="top"><span class="name">${s.name}</span><span class="pill ${s.type}">${s.type === "user" ? "Personal" : "Team"}</span></div>
+          <span class="meta">${s.meta}</span>
+          <span class="dot">Active</span>
+        </div>`).join("");
+      el.innerHTML = `
+        <div class="subs-head"><h3>Active subscriptions</h3><span class="subs-count">${subscriptions.length} total</span></div>
+        <div class="sub-grid">${cards}</div>`;
+    }
+
+    $("group").innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
+
+    $("teamToggle").addEventListener("change", e => {
+      const on = e.target.checked;
+      $("reveal").classList.toggle("open", on);
+      $("submit").textContent = on ? "Create team subscription" : "Subscribe";
+      $("status").textContent = "";
+    });
+
+    $("form").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = $("name").value.trim();
+      if (!name) { $("status").className = "status err"; $("status").textContent = "Please provide a subscription name."; return; }
+      const team = $("teamToggle").checked;
+      const meta = team ? $("group").selectedOptions[0].textContent + " · Created just now" : "Scope: /apis · Created just now";
+      subscriptions.push({ name, meta, type: team ? "team" : "user" });
+      $("name").value = "";
+      renderSubs();
+      $("status").className = "status ok";
+      $("status").textContent = "Subscription created successfully.";
+    });
+
+    renderSubs();
+  </script>
+</body>
+</html>

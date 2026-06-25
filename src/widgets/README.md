@@ -10,7 +10,7 @@ headers so the Functions can confirm the request comes from a valid Dev Portal u
 |--------|--------|------|---------------|
 | **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows the *User Subscription* / *Team Subscription* chooser, then swaps (via JS, no redirects) to either the user panel (lists the caller's subscriptions + create form) or the team-subscription create form. A *Back* link returns to the chooser. | `GET`/`POST /user-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
 | **Subscription Type** | `cw-subscription-type` | Lets the user choose *User Subscription* vs *Team Subscription* and navigates accordingly. | none (navigation only) |
-| **Create Team Subscription** | `cw-create-team-subscription` | Form: *Subscription Name* + *APIM Group* (populated with the caller's groups). Creates a standalone APIM subscription bound to the group. | `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
+| **Create Team Subscription** | `cw-create-team-subscription` | Lists the caller's existing **user *and* team** subscriptions in a compact **Type / Group / Name** table, then a form (*Subscription Name* + *APIM Group*, populated with the caller's groups) to create a standalone APIM subscription bound to the group. The list refreshes after a successful create. | `GET /apim/team-subscriptions`, `GET /user-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
 | **Subscriptions** | `cw-team-subscriptions` | Single table listing the caller's **user *and* team** subscriptions (Name, Type, Group, Product, State, Primary/Secondary Key, Date created) with a per-row "⋯" menu (*Show keys*, *Regenerate keys*, *Cancel subscription*). Inactive subscriptions show "The subscription is not active" instead of keys. | `GET /apim/team-subscriptions`, `GET /user-subscriptions`, `POST /apim/team-subscriptions/{group}/{subId}/{regenerate\|cancel}`, `POST /user-subscriptions/{subId}/{regenerate\|cancel}` |
 
 > The team-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
@@ -45,7 +45,9 @@ The Functions validate these headers (see the backend
 Each widget exposes editor values configured in the Dev Portal admin:
 
 - **Custom Product Subscription** — chooser title, the two card labels/descriptions, the user/team
-  panel titles, `functionBaseUrl`, and `scope` (APIM scope, default `/apis`).
+  panel titles, `functionBaseUrl`, and `scope`. The subscription scope is auto-derived from the
+  hosting product page (`/product#product={id}` → `/products/{id}`); `scope` is only a fallback used
+  when the widget is not on a product page (default `/apis` = all APIs).
 - **Subscription Type** — labels, descriptions and target URLs for the two options.
 - **Create Team Subscription** — `functionBaseUrl`, `scope` (APIM scope, default `/apis`),
   `successRedirectUrl`, and title.

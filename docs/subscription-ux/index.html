@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscription UX – Prototypes</title>
+  <style>
+    :root { --blue:#0078d4; --ink:#323130; --muted:#605e5c; --line:#e1dfdd; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 40px 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--ink); background: #faf9f8;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .sub { color: var(--muted); margin: 0 0 28px; font-size: 15px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    a.card {
+      display: block; text-decoration: none; color: inherit;
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      padding: 20px; transition: border-color .15s, box-shadow .15s, transform .1s;
+    }
+    a.card:hover { border-color: var(--blue); box-shadow: 0 4px 14px rgba(0,0,0,.08); transform: translateY(-2px); }
+    .tag { display:inline-block; font-size:12px; font-weight:600; color:var(--blue); background:#eff6fc; padding:3px 10px; border-radius:999px; margin-bottom:10px; }
+    a.card h2 { font-size: 17px; margin: 0 0 6px; }
+    a.card p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.45; }
+    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Subscription creation — 4 UX options</h1>
+    <p class="sub">Prototypes that simplify the current two-big-cards chooser. Each is self-contained (mock data, no backend) so you can click through and validate. Open each, then tell me which one to ship.</p>
+    <div class="grid">
+      <a class="card" href="./option-1-segmented.html">
+        <span class="tag">Option 1</span>
+        <h2>Segmented toggle</h2>
+        <p>A compact User / Team switch at the top with one inline form below. Everything stays on a single, small screen — no separate panels.</p>
+      </a>
+      <a class="card" href="./option-2-progressive.html">
+        <span class="tag">Option 2</span>
+        <h2>Progressive disclosure</h2>
+        <p>One simple form defaulting to a personal subscription. A “Share with a team” switch reveals the group picker only when needed.</p>
+      </a>
+      <a class="card" href="./option-3-dropdown.html">
+        <span class="tag">Option 3</span>
+        <h2>Dropdown selector</h2>
+        <p>The most minimal: a type dropdown + name field + Subscribe button in one tidy row. The group field appears only for team subscriptions.</p>
+      </a>
+      <a class="card" href="./option-4-compact-cards.html">
+        <span class="tag">Option 4</span>
+        <h2>Compact icon cards</h2>
+        <p>The familiar cards, but smaller, with icons, and they expand inline (accordion) instead of replacing the whole view.</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

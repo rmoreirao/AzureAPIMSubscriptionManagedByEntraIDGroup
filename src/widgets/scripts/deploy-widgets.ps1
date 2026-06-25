@@ -28,7 +28,8 @@
   APIM management API version. Defaults to $env:APIM_API_VERSION or 2024-05-01.
 
 .PARAMETER AccessToken
-  Optional bearer token. Defaults to $env:AZ_ACCESS_TOKEN. When unset, an interactive sign-in is used.
+  Optional bearer token. When omitted, a fresh token is minted via `az account get-access-token`
+  (falling back to $env:AZ_ACCESS_TOKEN only when az is unavailable).
 
 .PARAMETER DryRun
   Resolve and print the config (build still runs) without pushing anything to blob storage.
@@ -54,7 +55,7 @@ param(
   [string]$ServiceName = $env:APIM_SERVICE_NAME,
   [string]$ManagementEndpoint = $(if ($env:APIM_MANAGEMENT_ENDPOINT) { $env:APIM_MANAGEMENT_ENDPOINT } else { "https://management.azure.com" }),
   [string]$ApiVersion = $(if ($env:APIM_API_VERSION) { $env:APIM_API_VERSION } else { "2024-05-01" }),
-  [string]$AccessToken = $env:AZ_ACCESS_TOKEN,
+  [string]$AccessToken,
   [switch]$DryRun,
   [switch]$SkipBuild,
   [switch]$SkipPublish
@@ -74,11 +75,15 @@ if (-not $SubscriptionId -and (Get-Command az -ErrorAction SilentlyContinue)) {
   if ($LASTEXITCODE -eq 0 -and $azSub) { $SubscriptionId = $azSub.Trim() }
 }
 
-# Fall back to an az-issued ARM access token if none was provided.
+# Resolve a bearer token. Prefer an explicitly supplied token; otherwise always mint a fresh one
+# from az, because a cached $env:AZ_ACCESS_TOKEN from an earlier run is likely expired (which the
+# widget tooling reports as the misleading "Could not get storage SAS URL"). Fall back to the env
+# var only when az is unavailable.
 if (-not $AccessToken -and (Get-Command az -ErrorAction SilentlyContinue)) {
   $azToken = (az account get-access-token --query accessToken -o tsv 2>$null)
   if ($LASTEXITCODE -eq 0 -and $azToken) { $AccessToken = $azToken.Trim() }
 }
+if (-not $AccessToken) { $AccessToken = $env:AZ_ACCESS_TOKEN }
 
 $missing = @()
 if (-not $SubscriptionId) { $missing += "SubscriptionId / APIM_SUBSCRIPTION_ID" }

@@ -433,3 +433,5 @@ app.zip
 publish/
 
 samples/
+
+.playwright-cli/
