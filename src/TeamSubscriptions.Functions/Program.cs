@@ -12,7 +12,11 @@ using TeamSubscriptions.Functions.Security;
 using TeamSubscriptions.Functions.Services;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+    .ConfigureFunctionsWorkerDefaults(worker =>
+    {
+        // Flex Consumption ignores the platform CORS setting, so CORS is handled in code.
+        worker.UseMiddleware<CorsMiddleware>();
+    })
     .ConfigureServices((context, services) =>
     {
         IConfiguration config = context.Configuration;

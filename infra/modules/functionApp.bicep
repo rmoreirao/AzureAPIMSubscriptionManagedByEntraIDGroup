@@ -140,6 +140,9 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
       ]
       cors: {
         // Custom widgets call the Functions directly from the Developer Portal origin.
+        // NOTE: the Flex Consumption (FC1) plan ignores this platform CORS setting, so CORS is
+        // actually enforced in code by CorsMiddleware/CorsPreflight in the Functions app. This
+        // block is kept for documentation and forward-compatibility with other hosting plans.
         allowedOrigins: [
           devPortalUrl
         ]

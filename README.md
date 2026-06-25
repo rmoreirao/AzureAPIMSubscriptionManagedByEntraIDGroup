@@ -94,8 +94,12 @@ The `RequestAuthService` (in `src/TeamSubscriptions.Functions/Security`) validat
 belongs to the claimed user, that the origin matches the configured Dev Portal (`DevPortal__Url`),
 and — as the decisive proof — calls the APIM **management API** with the SAS token (only APIM can
 validate a delegation token). Set `DevPortal__Url` to your portal URL (e.g.
-`https://<apim>.developer.azure-api.net`); the infra deploy sets this automatically and also adds the
-portal origin to the Function App CORS allow-list.
+`https://<apim>.developer.azure-api.net`); the infra deploy sets this automatically.
+
+Because the Function App runs on the **Flex Consumption** plan — which ignores the platform-managed
+CORS setting — CORS is enforced **in code** by `CorsMiddleware` and the `CorsPreflight` (OPTIONS)
+function in `src/TeamSubscriptions.Functions`. Both echo the configured `DevPortal__Url` origin, so
+keeping `DevPortal__Url` correct is what allows the browser widgets to call the Functions.
 
 The three custom widgets that drive these flows live in [`src/widgets`](src/widgets/README.md).
 
