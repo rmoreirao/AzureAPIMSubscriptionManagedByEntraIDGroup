@@ -99,6 +99,12 @@ body {
   flex-direction: column;
 }
 
+// The menu is toggled via the `hidden` attribute in JS; an explicit `display` above otherwise
+// overrides the attribute's default `display: none`, leaving every row's menu permanently visible.
+.menu[hidden] {
+  display: none;
+}
+
 .menu-item {
   background: none;
   border: none;

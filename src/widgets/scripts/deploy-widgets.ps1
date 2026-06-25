@@ -36,6 +36,9 @@
 .PARAMETER SkipBuild
   Run `node deploy.js` directly instead of `npm run deploy` (skips the tsc + vite build).
 
+.PARAMETER SkipPublish
+  Do not publish (create a new portal revision of) the APIM developer portal after deploying widgets.
+
 .EXAMPLE
   ./deploy-widgets.ps1 -ResourceGroup rg-apimteam-dev -ServiceName apimteam-apim-3dexfwdm3jz34
 
@@ -53,7 +56,8 @@ param(
   [string]$ApiVersion = $(if ($env:APIM_API_VERSION) { $env:APIM_API_VERSION } else { "2024-05-01" }),
   [string]$AccessToken = $env:AZ_ACCESS_TOKEN,
   [switch]$DryRun,
-  [switch]$SkipBuild
+  [switch]$SkipBuild,
+  [switch]$SkipPublish
 )
 
 $ErrorActionPreference = "Stop"
@@ -129,3 +133,37 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host "`nAll requested widgets processed successfully." -ForegroundColor Green
+
+# Publish the developer portal by creating a new portal revision so the deployed widgets go live.
+if ($DryRun) {
+  Write-Host "`nDRY RUN - skipping developer portal publish." -ForegroundColor Yellow
+}
+elseif ($SkipPublish) {
+  Write-Host "`nSkipPublish set - developer portal was not published." -ForegroundColor Yellow
+}
+else {
+  if (-not $AccessToken) {
+    throw "Cannot publish developer portal: no access token available. Pass -AccessToken or sign in with 'az login'."
+  }
+
+  $revisionId = "deploy-widgets-{0}" -f (Get-Date -Format "yyyyMMddHHmmss")
+  $publishUri = "{0}/subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ApiManagement/service/{3}/portalRevisions/{4}?api-version={5}" -f `
+    $ManagementEndpoint.TrimEnd('/'), $SubscriptionId, $ResourceGroup, $ServiceName, $revisionId, $ApiVersion
+
+  $publishBody = @{
+    properties = @{
+      description = "Published by deploy-widgets.ps1 on $(Get-Date -Format o)"
+      isCurrent   = $true
+    }
+  } | ConvertTo-Json -Depth 5
+
+  Write-Host "`nPublishing developer portal (revision $revisionId)..." -ForegroundColor Cyan
+  try {
+    Invoke-RestMethod -Method Put -Uri $publishUri -Body $publishBody `
+      -Headers @{ Authorization = "Bearer $AccessToken" } -ContentType "application/json" | Out-Null
+    Write-Host "Developer portal publish initiated successfully." -ForegroundColor Green
+  }
+  catch {
+    throw "Developer portal publish failed: $($_.Exception.Message)"
+  }
+}
