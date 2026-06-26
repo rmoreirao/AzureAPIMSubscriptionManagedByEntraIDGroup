@@ -49,3 +49,8 @@ jobs:
             infra/main.parameters.dev.json
             publisherEmail=${{ vars.APIM_PUBLISHER_EMAIL || 'rmoreirao@microsoft.com' }}
           failOnStdErr: false
+
+      - name: Raise product subscription limits (post-deploy)
+        shell: pwsh
+        run: |
+          ./infra/scripts/Set-ProductSubscriptionLimits.ps1 -ResourceGroup "$env:AZURE_RESOURCE_GROUP" -Limit 10000

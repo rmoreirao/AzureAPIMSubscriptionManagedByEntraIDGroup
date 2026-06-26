@@ -16,44 +16,54 @@
 <body>
 <fieldset class="form">
   <div class="form-group">
-    <label class="form-label" for="title">Chooser title</label>
-    <input id="title" class="form-control" type="text" oninput="onChange({title: this.value})" />
+    <label class="form-label" for="createHeading">Create section heading</label>
+    <input id="createHeading" class="form-control" type="text" oninput="onChange({createHeading: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="userSubscriptionLabel">User subscription – label</label>
-    <input id="userSubscriptionLabel" class="form-control" type="text"
-           oninput="onChange({userSubscriptionLabel: this.value})" />
+    <label class="form-label" for="typeLabel">Type field – label</label>
+    <input id="typeLabel" class="form-control" type="text" oninput="onChange({typeLabel: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="userSubscriptionDescription">User subscription – description</label>
-    <input id="userSubscriptionDescription" class="form-control" type="text"
-           oninput="onChange({userSubscriptionDescription: this.value})" />
+    <label class="form-label" for="typePersonalLabel">Type option – Personal</label>
+    <input id="typePersonalLabel" class="form-control" type="text"
+           oninput="onChange({typePersonalLabel: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="groupSubscriptionLabel">Group subscription – label</label>
-    <input id="groupSubscriptionLabel" class="form-control" type="text"
-           oninput="onChange({groupSubscriptionLabel: this.value})" />
+    <label class="form-label" for="typeGroupLabel">Type option – Group</label>
+    <input id="typeGroupLabel" class="form-control" type="text"
+           oninput="onChange({typeGroupLabel: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="groupSubscriptionDescription">Group subscription – description</label>
-    <input id="groupSubscriptionDescription" class="form-control" type="text"
-           oninput="onChange({groupSubscriptionDescription: this.value})" />
+    <label class="form-label" for="nameLabel">Subscription name – label</label>
+    <input id="nameLabel" class="form-control" type="text" oninput="onChange({nameLabel: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="userPanelTitle">User panel – title</label>
-    <input id="userPanelTitle" class="form-control" type="text"
-           oninput="onChange({userPanelTitle: this.value})" />
+    <label class="form-label" for="namePlaceholder">Subscription name – placeholder</label>
+    <input id="namePlaceholder" class="form-control" type="text"
+           oninput="onChange({namePlaceholder: this.value})" />
   </div>
 
   <div class="form-group">
-    <label class="form-label" for="groupPanelTitle">Group panel – title</label>
-    <input id="groupPanelTitle" class="form-control" type="text"
-           oninput="onChange({groupPanelTitle: this.value})" />
+    <label class="form-label" for="groupFieldLabel">APIM group – label</label>
+    <input id="groupFieldLabel" class="form-control" type="text"
+           oninput="onChange({groupFieldLabel: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="personalButtonLabel">Button label – Personal</label>
+    <input id="personalButtonLabel" class="form-control" type="text"
+           oninput="onChange({personalButtonLabel: this.value})" />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="groupButtonLabel">Button label – Group</label>
+    <input id="groupButtonLabel" class="form-control" type="text"
+           oninput="onChange({groupButtonLabel: this.value})" />
   </div>
 
   <div class="form-group">

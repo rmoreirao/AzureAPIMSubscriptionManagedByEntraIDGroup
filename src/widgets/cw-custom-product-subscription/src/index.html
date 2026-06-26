@@ -29,58 +29,40 @@
       <p id="subsStatus" class="status"></p>
     </section>
 
-    <div class="divider">Create a new subscription</div>
+    <div class="divider" id="createHeading">Create a new subscription</div>
 
-    <!-- Step 1: choose a subscription type -->
-    <section id="chooser" class="subscription-type">
-      <h3 id="title" class="subscription-type__title"></h3>
-      <div class="subscription-type__options">
-        <button type="button" class="option-card" id="userSubscription">
-          <span class="option-card__label" id="userSubscriptionLabel"></span>
-          <span class="option-card__desc" id="userSubscriptionDescription"></span>
-        </button>
-        <button type="button" class="option-card" id="groupSubscription">
-          <span class="option-card__label" id="groupSubscriptionLabel"></span>
-          <span class="option-card__desc" id="groupSubscriptionDescription"></span>
-        </button>
-      </div>
-    </section>
-
-    <!-- Step 2a: user subscription panel (create form) -->
-    <section id="userPanel" class="panel" hidden>
-      <button type="button" class="link-back" data-back>&larr; Back</button>
-      <h3 id="userPanelTitle" class="panel__title"></h3>
-
-      <form id="userForm" class="user-form">
-        <input id="userSubscriptionName" class="form-control" type="text" required
-               placeholder="Your new product subscription name" />
-        <button type="submit" id="userSubmit" class="btn-primary">Subscribe</button>
-      </form>
-      <p id="userStatus" class="status"></p>
-    </section>
-
-    <!-- Step 2b: group subscription panel -->
-    <section id="groupPanel" class="panel" hidden>
-      <button type="button" class="link-back" data-back>&larr; Back</button>
-      <h3 id="groupPanelTitle" class="panel__title"></h3>
-      <form id="groupForm" class="create-group__form">
-        <div class="form-group">
-          <label class="form-label" for="groupSubscriptionName">Subscription Name</label>
-          <input id="groupSubscriptionName" class="form-control" type="text" required
-                 placeholder="e.g. Payments API – Group A" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="entraIdGroup">APIM Group</label>
-          <select id="entraIdGroup" class="form-control" required>
-            <option value="" disabled selected>Loading your groups…</option>
+    <!-- Inline create form: Type + Subscription name + submit, with a conditional APIM group row -->
+    <form id="createForm" class="create-form">
+      <div class="bar">
+        <div class="col col--type">
+          <label class="form-label" for="subType" id="typeLabel">Type</label>
+          <select id="subType" class="form-control">
+            <option value="user" id="typePersonalOption">👤 Personal</option>
+            <option value="group" id="typeGroupOption">👥 Group</option>
           </select>
         </div>
+        <div class="col col--name">
+          <label class="form-label" for="subName" id="nameLabel">Subscription name</label>
+          <input id="subName" class="form-control" type="text" required
+                 placeholder="Your new product subscription name" />
+        </div>
+        <button type="submit" id="createSubmit" class="btn-primary">Subscribe</button>
+      </div>
 
-        <button type="submit" id="groupSubmit" class="btn-primary">Create Subscription</button>
-        <p id="groupStatus" class="status"></p>
-      </form>
-    </section>
+      <div class="group-row" id="groupRow" hidden>
+        <div class="bar">
+          <div class="col col--type" aria-hidden="true"></div>
+          <div class="col col--name">
+            <label class="form-label" for="subGroup" id="groupFieldLabel">APIM group</label>
+            <select id="subGroup" class="form-control">
+              <option value="" disabled selected>Loading your groups…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <p id="createStatus" class="status"></p>
+    </form>
   </div>
 </body>
 </html>

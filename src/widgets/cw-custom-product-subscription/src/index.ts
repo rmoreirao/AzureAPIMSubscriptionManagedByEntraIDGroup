@@ -141,48 +141,47 @@ async function main(): Promise<void> {
   logInfo("Resolved subscription scope", {parentHref: secrets.parentLocation?.href, scope})
 
 
-  // --- Step 1: chooser labels ---
-  setText("title", values.title)
-  setText("userSubscriptionLabel", values.userSubscriptionLabel)
-  setText("userSubscriptionDescription", values.userSubscriptionDescription)
-  setText("groupSubscriptionLabel", values.groupSubscriptionLabel)
-  setText("groupSubscriptionDescription", values.groupSubscriptionDescription)
-  setText("userPanelTitle", values.userPanelTitle)
-  setText("groupPanelTitle", values.groupPanelTitle)
+  // --- Create form: configurable labels ---
+  setText("createHeading", values.createHeading)
+  setText("typeLabel", values.typeLabel)
+  setText("nameLabel", values.nameLabel)
+  setText("groupFieldLabel", values.groupFieldLabel)
+
+  const personalOption = document.getElementById("typePersonalOption")
+  if (personalOption) personalOption.textContent = values.typePersonalLabel
+  const groupOption = document.getElementById("typeGroupOption")
+  if (groupOption) groupOption.textContent = values.typeGroupLabel
+
+  const nameInput = document.getElementById("subName") as HTMLInputElement | null
+  if (nameInput) nameInput.placeholder = values.namePlaceholder
+
+  const submitButton = document.getElementById("createSubmit") as HTMLButtonElement | null
+  if (submitButton) submitButton.textContent = values.personalButtonLabel
 
   // Load the caller's existing subscriptions (user + group) into the top table.
   void refreshSubscriptions(apiFetch)
 
-  let groupPanelLoaded = false
+  let groupsLoaded = false
 
-  function showChooser(): void {
-    show("chooser")
-    hide("userPanel")
-    hide("groupPanel")
-  }
-
-  document.getElementById("userSubscription")?.addEventListener("click", () => {
-    hide("chooser")
-    hide("groupPanel")
-    show("userPanel")
-  })
-
-  document.getElementById("groupSubscription")?.addEventListener("click", () => {
-    hide("chooser")
-    hide("userPanel")
-    show("groupPanel")
-    if (!groupPanelLoaded) {
-      groupPanelLoaded = true
+  const typeSelect = document.getElementById("subType") as HTMLSelectElement | null
+  typeSelect?.addEventListener("change", () => {
+    const isGroup = typeSelect.value === "group"
+    if (isGroup) {
+      show("groupRow")
+    } else {
+      hide("groupRow")
+    }
+    if (submitButton) {
+      submitButton.textContent = isGroup ? values.groupButtonLabel : values.personalButtonLabel
+    }
+    setStatus("createStatus", "")
+    if (isGroup && !groupsLoaded) {
+      groupsLoaded = true
       void loadGroups(apiFetch, secrets.userId ?? "")
     }
   })
 
-  document.querySelectorAll("[data-back]").forEach(button => {
-    button.addEventListener("click", () => showChooser())
-  })
-
-  setupUserPanel(apiFetch, scope)
-  setupGroupPanel(apiFetch, scope)
+  setupCreateForm(apiFetch, scope)
 }
 
 // ---------------------------------------------------------------------------
@@ -286,53 +285,14 @@ async function refreshSubscriptions(apiFetch: ApiFetch): Promise<void> {
   }
 }
 
-function setupUserPanel(apiFetch: ApiFetch, scope: string): void {
-  const form = document.getElementById("userForm") as HTMLFormElement | null
-  const nameInput = document.getElementById("userSubscriptionName") as HTMLInputElement | null
-  const submitButton = document.getElementById("userSubmit") as HTMLButtonElement | null
-
-  form?.addEventListener("submit", async event => {
-    event.preventDefault()
-    const subscriptionName = nameInput?.value.trim()
-    if (!subscriptionName) {
-      setStatus("userStatus", "Please provide a subscription name.", "error")
-      return
-    }
-
-    if (submitButton) submitButton.disabled = true
-    setStatus("userStatus", "Creating subscription…")
-    try {
-      logInfo("POST /user-subscriptions", {subscriptionName, scope})
-      const response = await apiFetch("/user-subscriptions", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({subscriptionName, scope}),
-      })
-      logInfo("POST /user-subscriptions response", {status: response.status, ok: response.ok})
-      if (!response.ok) {
-        const body = await readBodySafe(response)
-        throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
-      }
-      setStatus("userStatus", "Subscription created successfully.", "success")
-      if (nameInput) nameInput.value = ""
-      await refreshSubscriptions(apiFetch)
-    } catch (error) {
-      logError("Failed to create user subscription", error)
-      setStatus("userStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
-    } finally {
-      if (submitButton) submitButton.disabled = false
-    }
-  })
-}
-
 // ---------------------------------------------------------------------------
-// Group subscription panel: pick an APIM group + create form.
+// Group loading: populate the APIM group dropdown for the current user.
 // ---------------------------------------------------------------------------
 async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
-  const groupSelect = document.getElementById("entraIdGroup") as HTMLSelectElement | null
+  const groupSelect = document.getElementById("subGroup") as HTMLSelectElement | null
 
   if (!userId) {
-    setStatus("groupStatus", "Unable to determine the current user.", "error")
+    setStatus("createStatus", "Unable to determine the current user.", "error")
     return
   }
 
@@ -348,7 +308,7 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
     if (groupSelect) {
       groupSelect.innerHTML = ""
       if (groups.length === 0) {
-        setStatus("groupStatus", "You are not a member of any APIM group.", "error")
+        setStatus("createStatus", "You are not a member of any APIM group.", "error")
       }
       for (const group of groups) {
         const option = document.createElement("option")
@@ -359,46 +319,70 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
     }
   } catch (error) {
     logError("Failed to load APIM groups", error)
-    setStatus("groupStatus", `Failed to load your APIM groups: ${describeError(error)}`, "error")
+    setStatus("createStatus", `Failed to load your APIM groups: ${describeError(error)}`, "error")
   }
 }
 
-function setupGroupPanel(apiFetch: ApiFetch, scope: string): void {
-  const form = document.getElementById("groupForm") as HTMLFormElement | null
-  const nameInput = document.getElementById("groupSubscriptionName") as HTMLInputElement | null
-  const groupSelect = document.getElementById("entraIdGroup") as HTMLSelectElement | null
-  const submitButton = document.getElementById("groupSubmit") as HTMLButtonElement | null
+// ---------------------------------------------------------------------------
+// Create form: single inline bar handling both user and group subscriptions.
+// ---------------------------------------------------------------------------
+function setupCreateForm(apiFetch: ApiFetch, scope: string): void {
+  const form = document.getElementById("createForm") as HTMLFormElement | null
+  const typeSelect = document.getElementById("subType") as HTMLSelectElement | null
+  const nameInput = document.getElementById("subName") as HTMLInputElement | null
+  const groupSelect = document.getElementById("subGroup") as HTMLSelectElement | null
+  const submitButton = document.getElementById("createSubmit") as HTMLButtonElement | null
 
   form?.addEventListener("submit", async event => {
     event.preventDefault()
     const subscriptionName = nameInput?.value.trim()
+    if (!subscriptionName) {
+      setStatus("createStatus", "Please provide a subscription name.", "error")
+      return
+    }
+
+    const isGroup = typeSelect?.value === "group"
     const entraIdGroup = groupSelect?.value
-    if (!subscriptionName || !entraIdGroup) {
-      setStatus("groupStatus", "Please provide a subscription name and select a group.", "error")
+    if (isGroup && !entraIdGroup) {
+      setStatus("createStatus", "Please select an APIM group.", "error")
       return
     }
 
     if (submitButton) submitButton.disabled = true
-    setStatus("groupStatus", "Creating subscription…")
+    setStatus("createStatus", "Creating subscription…")
     try {
-      const groupName = groupSelect?.selectedOptions[0]?.textContent ?? ""
-      logInfo("POST /apim/group-subscriptions", {subscriptionName, entraIdGroup, groupName, scope})
-      const response = await apiFetch("/apim/group-subscriptions", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({subscriptionName, entraIdGroup, groupName, scope}),
-      })
-      logInfo("POST /apim/group-subscriptions response", {status: response.status, ok: response.ok})
-      if (!response.ok) {
-        const body = await readBodySafe(response)
-        throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+      if (isGroup) {
+        const groupName = groupSelect?.selectedOptions[0]?.textContent ?? ""
+        logInfo("POST /apim/group-subscriptions", {subscriptionName, entraIdGroup, groupName, scope})
+        const response = await apiFetch("/apim/group-subscriptions", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({subscriptionName, entraIdGroup, groupName, scope}),
+        })
+        logInfo("POST /apim/group-subscriptions response", {status: response.status, ok: response.ok})
+        if (!response.ok) {
+          const body = await readBodySafe(response)
+          throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+        }
+      } else {
+        logInfo("POST /user-subscriptions", {subscriptionName, scope})
+        const response = await apiFetch("/user-subscriptions", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({subscriptionName, scope}),
+        })
+        logInfo("POST /user-subscriptions response", {status: response.status, ok: response.ok})
+        if (!response.ok) {
+          const body = await readBodySafe(response)
+          throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
+        }
       }
-      setStatus("groupStatus", "Subscription created successfully.", "success")
+      setStatus("createStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
       await refreshSubscriptions(apiFetch)
     } catch (error) {
-      logError("Failed to create group subscription", error)
-      setStatus("groupStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
+      logError("Failed to create subscription", error)
+      setStatus("createStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
     } finally {
       if (submitButton) submitButton.disabled = false
     }
