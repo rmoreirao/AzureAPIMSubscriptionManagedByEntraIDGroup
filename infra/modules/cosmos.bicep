@@ -5,9 +5,9 @@ param location string
 param accountName string
 
 @description('Name of the SQL database.')
-param databaseName string = 'teamsubscriptions'
+param databaseName string = 'groupsubscriptions'
 
-@description('Name of the container storing team subscriptions.')
+@description('Name of the container storing group subscriptions.')
 param containerName string = 'subscriptions'
 
 @description('Tags applied to the Cosmos DB account.')

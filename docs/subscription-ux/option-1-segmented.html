@@ -31,7 +31,7 @@
     .dot::before { content:""; width:7px; height:7px; border-radius:50%; background:#0b6a0b; }
     .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
     .pill.user { color:#5c2e91; background:#f3eefb; }
-    .pill.team { color:#0b6a0b; background:#eafaea; }
+    .pill.group { color:#0b6a0b; background:#eafaea; }
     @media (max-width:520px){ .sub-grid{ grid-template-columns:1fr; } }
 
     /* divider that introduces the create form */
@@ -70,7 +70,7 @@
 
       <div class="seg" role="tablist">
         <button id="segUser" class="active" type="button">👤 For me</button>
-        <button id="segTeam" type="button">👥 For my team</button>
+        <button id="segGroup" type="button">👥 For my group</button>
       </div>
       <p class="seg-desc" id="segDesc"></p>
 
@@ -91,10 +91,10 @@
   </div>
 
   <script>
-    const groups = [{id:"g1",name:"Payments Team"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
+    const groups = [{id:"g1",name:"Payments Group"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
     let subscriptions = [
       { name:"Payments API – Prod", meta:"Scope: /apis · Created Jun 12", type:"user" },
-      { name:"Checkout – Team A", meta:"Payments Team · Created Jun 18", type:"team" },
+      { name:"Checkout – Group A", meta:"Payments Group · Created Jun 18", type:"group" },
     ];
     let type = "user";
 
@@ -104,7 +104,7 @@
       const el = $("subs");
       const cards = subscriptions.map(s => `
         <div class="sub-card">
-          <div class="top"><span class="name">${s.name}</span><span class="pill ${s.type}">${s.type === "user" ? "Personal" : "Team"}</span></div>
+          <div class="top"><span class="name">${s.name}</span><span class="pill ${s.type}">${s.type === "user" ? "Personal" : "Group"}</span></div>
           <span class="meta">${s.meta}</span>
           <span class="dot">Active</span>
         </div>`).join("");
@@ -116,18 +116,18 @@
     function selectType(t) {
       type = t;
       $("segUser").classList.toggle("active", t === "user");
-      $("segTeam").classList.toggle("active", t === "team");
+      $("segGroup").classList.toggle("active", t === "group");
       $("segDesc").textContent = t === "user"
         ? "A personal subscription tied to your own account."
         : "A shared subscription managed by an APIM group.";
-      $("groupField").hidden = t !== "team";
-      $("submit").textContent = t === "user" ? "Subscribe" : "Create team subscription";
+      $("groupField").hidden = t !== "group";
+      $("submit").textContent = t === "user" ? "Subscribe" : "Create group subscription";
       $("status").textContent = "";
     }
 
     $("group").innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
     $("segUser").onclick = () => selectType("user");
-    $("segTeam").onclick = () => selectType("team");
+    $("segGroup").onclick = () => selectType("group");
 
     $("form").addEventListener("submit", e => {
       e.preventDefault();

@@ -29,7 +29,7 @@
     .dot { display:inline-flex; align-items:center; gap:5px; font-size:12px; color:#0b6a0b; }
     .dot::before { content:""; width:7px; height:7px; border-radius:50%; background:#0b6a0b; }
     .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
-    .pill.user { color:#5c2e91; background:#f3eefb; } .pill.team { color:#0b6a0b; background:#eafaea; }
+    .pill.user { color:#5c2e91; background:#f3eefb; } .pill.group { color:#0b6a0b; background:#eafaea; }
     @media (max-width:520px){ .sub-grid{ grid-template-columns:1fr; } }
 
     .divider { display:flex; align-items:center; gap:12px; margin:22px 0 16px; color:var(--ink); font-size:14px; font-weight:600; }
@@ -69,7 +69,7 @@
             <label for="type">Type</label>
             <select id="type" class="control">
               <option value="user">👤 Personal</option>
-              <option value="team">👥 Team</option>
+              <option value="group">👥 Group</option>
             </select>
           </div>
           <div class="col name">
@@ -91,10 +91,10 @@
   </div>
 
   <script>
-    const groups = [{id:"g1",name:"Payments Team"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
+    const groups = [{id:"g1",name:"Payments Group"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
     let subscriptions = [
       { name:"Payments API – Prod", meta:"Scope: /apis · Created Jun 12", type:"user" },
-      { name:"Checkout – Team A", meta:"Payments Team · Created Jun 18", type:"team" },
+      { name:"Checkout – Group A", meta:"Payments Group · Created Jun 18", type:"group" },
     ];
     const $ = id => document.getElementById(id);
 
@@ -102,7 +102,7 @@
       const el = $("subs");
       const cards = subscriptions.map(s => `
         <div class="sub-card">
-          <div class="top"><span class="name">${s.name}</span><span class="pill ${s.type}">${s.type === "user" ? "Personal" : "Team"}</span></div>
+          <div class="top"><span class="name">${s.name}</span><span class="pill ${s.type}">${s.type === "user" ? "Personal" : "Group"}</span></div>
           <span class="meta">${s.meta}</span>
           <span class="dot">Active</span>
         </div>`).join("");
@@ -114,19 +114,19 @@
     $("group").innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
 
     $("type").addEventListener("change", e => {
-      const team = e.target.value === "team";
-      $("groupRow").hidden = !team;
-      $("submit").textContent = team ? "Create" : "Subscribe";
+      const group = e.target.value === "group";
+      $("groupRow").hidden = !group;
+      $("submit").textContent = group ? "Create" : "Subscribe";
       $("status").textContent = "";
     });
 
     $("form").addEventListener("submit", e => {
       e.preventDefault();
       const name = $("name").value.trim();
-      const team = $("type").value === "team";
+      const group = $("type").value === "group";
       if (!name) { $("status").className = "status err"; $("status").textContent = "Please provide a subscription name."; return; }
-      const meta = team ? $("group").selectedOptions[0].textContent + " · Created just now" : "Scope: /apis · Created just now";
-      subscriptions.push({ name, meta, type: team ? "team" : "user" });
+      const meta = group ? $("group").selectedOptions[0].textContent + " · Created just now" : "Scope: /apis · Created just now";
+      subscriptions.push({ name, meta, type: group ? "group" : "user" });
       $("name").value = "";
       renderSubs();
       $("status").className = "status ok";

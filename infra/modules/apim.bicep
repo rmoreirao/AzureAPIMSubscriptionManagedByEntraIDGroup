@@ -39,7 +39,7 @@ resource apim 'Microsoft.ApiManagement/service@2023-09-01-preview' = {
 
 resource backend 'Microsoft.ApiManagement/service/backends@2023-09-01-preview' = {
   parent: apim
-  name: 'team-subscriptions-functions'
+  name: 'group-subscriptions-functions'
   properties: {
     protocol: 'http'
     url: 'https://${functionAppHostName}/api'
@@ -48,10 +48,10 @@ resource backend 'Microsoft.ApiManagement/service/backends@2023-09-01-preview' =
 
 resource api 'Microsoft.ApiManagement/service/apis@2023-09-01-preview' = {
   parent: apim
-  name: 'team-subscriptions'
+  name: 'group-subscriptions'
   properties: {
-    displayName: 'Team Subscriptions'
-    path: 'team-subscriptions'
+    displayName: 'Group Subscriptions'
+    path: 'group-subscriptions'
     protocols: [
       'https'
     ]
@@ -62,17 +62,17 @@ resource api 'Microsoft.ApiManagement/service/apis@2023-09-01-preview' = {
 
 var operations = [
   {
-    name: 'get-team-subscriptions'
-    displayName: 'List Team Subscriptions'
+    name: 'get-group-subscriptions'
+    displayName: 'List Group Subscriptions'
     method: 'GET'
-    urlTemplate: '/team-subscriptions'
+    urlTemplate: '/group-subscriptions'
     templateParameters: []
   }
   {
-    name: 'save-team-subscription'
-    displayName: 'Save Team Subscription'
+    name: 'save-group-subscription'
+    displayName: 'Save Group Subscription'
     method: 'POST'
-    urlTemplate: '/team-subscriptions'
+    urlTemplate: '/group-subscriptions'
     templateParameters: []
   }
   {
@@ -89,10 +89,10 @@ var operations = [
     ]
   }
   {
-    name: 'manage-team-subscription'
-    displayName: 'Manage Team Subscription'
+    name: 'manage-group-subscription'
+    displayName: 'Manage Group Subscription'
     method: 'POST'
-    urlTemplate: '/team-subscriptions/{entraIdGroup}/{subscriptionId}/{action}'
+    urlTemplate: '/group-subscriptions/{entraIdGroup}/{subscriptionId}/{action}'
     templateParameters: [
       {
         name: 'entraIdGroup'

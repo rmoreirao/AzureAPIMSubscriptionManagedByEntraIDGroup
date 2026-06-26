@@ -12,6 +12,21 @@ type UserSubscription = {
   dateCreated?: string
 }
 
+type GroupSubscription = {
+  subscriptionName: string
+  entraIdGroup?: string | null
+  groupName?: string | null
+}
+
+type SubscriptionType = "User" | "Group"
+
+/** Normalized row used to render the Active subscriptions table. */
+type SubscriptionRow = {
+  type: SubscriptionType
+  group: string
+  name: string
+}
+
 type StatusKind = "info" | "error" | "success"
 
 const LOG_PREFIX = "[cw-custom-product-subscription]"
@@ -130,36 +145,34 @@ async function main(): Promise<void> {
   setText("title", values.title)
   setText("userSubscriptionLabel", values.userSubscriptionLabel)
   setText("userSubscriptionDescription", values.userSubscriptionDescription)
-  setText("teamSubscriptionLabel", values.teamSubscriptionLabel)
-  setText("teamSubscriptionDescription", values.teamSubscriptionDescription)
+  setText("groupSubscriptionLabel", values.groupSubscriptionLabel)
+  setText("groupSubscriptionDescription", values.groupSubscriptionDescription)
   setText("userPanelTitle", values.userPanelTitle)
-  setText("teamPanelTitle", values.teamPanelTitle)
+  setText("groupPanelTitle", values.groupPanelTitle)
 
-  let userPanelLoaded = false
-  let teamPanelLoaded = false
+  // Load the caller's existing subscriptions (user + group) into the top table.
+  void refreshSubscriptions(apiFetch)
+
+  let groupPanelLoaded = false
 
   function showChooser(): void {
     show("chooser")
     hide("userPanel")
-    hide("teamPanel")
+    hide("groupPanel")
   }
 
   document.getElementById("userSubscription")?.addEventListener("click", () => {
     hide("chooser")
-    hide("teamPanel")
+    hide("groupPanel")
     show("userPanel")
-    if (!userPanelLoaded) {
-      userPanelLoaded = true
-      void loadUserSubscriptions(apiFetch)
-    }
   })
 
-  document.getElementById("teamSubscription")?.addEventListener("click", () => {
+  document.getElementById("groupSubscription")?.addEventListener("click", () => {
     hide("chooser")
     hide("userPanel")
-    show("teamPanel")
-    if (!teamPanelLoaded) {
-      teamPanelLoaded = true
+    show("groupPanel")
+    if (!groupPanelLoaded) {
+      groupPanelLoaded = true
       void loadGroups(apiFetch, secrets.userId ?? "")
     }
   })
@@ -169,59 +182,107 @@ async function main(): Promise<void> {
   })
 
   setupUserPanel(apiFetch, scope)
-  setupTeamPanel(apiFetch, scope)
+  setupGroupPanel(apiFetch, scope)
 }
 
 // ---------------------------------------------------------------------------
-// User subscription panel: list existing subscriptions + create form.
+// Active subscriptions table: lists the caller's user + group subscriptions.
 // ---------------------------------------------------------------------------
-async function loadUserSubscriptions(apiFetch: ApiFetch): Promise<void> {
-  const list = document.getElementById("userSubList")
-  if (!list) return
-  list.innerHTML = `<p class="user-sub-empty">Loading your subscriptions…</p>`
-  try {
-    logInfo("GET /user-subscriptions")
-    const response = await apiFetch("/user-subscriptions")
-    logInfo("GET /user-subscriptions response", {status: response.status, ok: response.ok})
-    if (!response.ok) {
-      const body = await readBodySafe(response)
-      throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
-    }
-    const subscriptions: UserSubscription[] = await response.json()
-    logInfo("GET /user-subscriptions returned subscriptions", subscriptions)
-    renderUserSubscriptions(list, subscriptions)
-  } catch (error) {
-    logError("Failed to load user subscriptions", error)
-    list.innerHTML = `<p class="user-sub-empty">Failed to load your subscriptions.</p>`
+function setSubsStatus(message: string, kind: StatusKind = "info"): void {
+  setStatus("subsStatus", message, kind)
+}
+
+async function loadSubscriptionType(
+  apiFetch: ApiFetch,
+  label: SubscriptionType,
+  path: string
+): Promise<SubscriptionRow[]> {
+  logInfo(`GET ${path}`)
+  const response = await apiFetch(path)
+  logInfo(`GET ${path} response`, {status: response.status, ok: response.ok})
+  if (!response.ok) {
+    const body = await readBodySafe(response)
+    throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
   }
+  const items = await response.json()
+  if (!Array.isArray(items)) {
+    logError(`${label} response was not an array`, items)
+    return []
+  }
+  if (label === "Group") {
+    return (items as GroupSubscription[]).map(item => ({
+      type: "Group",
+      group: item.groupName || item.entraIdGroup || "—",
+      name: item.subscriptionName,
+    }))
+  }
+  return (items as UserSubscription[]).map(item => ({
+    type: "User",
+    group: "—",
+    name: item.subscriptionName,
+  }))
 }
 
-function renderUserSubscriptions(list: HTMLElement, subscriptions: UserSubscription[]): void {
-  list.innerHTML = ""
-  if (!subscriptions || subscriptions.length === 0) {
-    const empty = document.createElement("p")
-    empty.className = "user-sub-empty"
-    empty.textContent = "You don't have subscriptions yet."
-    list.appendChild(empty)
+function renderSubscriptions(rows: SubscriptionRow[]): void {
+  const body = document.getElementById("subsBody")
+  const count = document.getElementById("subsCount")
+  const empty = document.getElementById("subsEmpty")
+  if (!body) return
+
+  body.innerHTML = ""
+  for (const row of rows) {
+    const tr = document.createElement("tr")
+
+    const typeCell = document.createElement("td")
+    const pill = document.createElement("span")
+    pill.className = `pill pill--${row.type.toLowerCase()}`
+    pill.textContent = row.type
+    typeCell.appendChild(pill)
+
+    const groupCell = document.createElement("td")
+    groupCell.textContent = row.group || "—"
+
+    const nameCell = document.createElement("td")
+    nameCell.textContent = row.name
+
+    tr.append(typeCell, groupCell, nameCell)
+    body.appendChild(tr)
+  }
+
+  if (count) count.textContent = rows.length ? `${rows.length} total` : ""
+  if (empty) empty.hidden = rows.length > 0
+}
+
+async function refreshSubscriptions(apiFetch: ApiFetch): Promise<void> {
+  setSubsStatus("Loading your subscriptions…")
+  const [groupResult, userResult] = await Promise.allSettled([
+    loadSubscriptionType(apiFetch, "Group", "/apim/group-subscriptions"),
+    loadSubscriptionType(apiFetch, "User", "/user-subscriptions"),
+  ])
+
+  const rows: SubscriptionRow[] = []
+  if (groupResult.status === "fulfilled") rows.push(...groupResult.value)
+  if (userResult.status === "fulfilled") rows.push(...userResult.value)
+
+  const groupFailed = groupResult.status === "rejected"
+  const userFailed = userResult.status === "rejected"
+
+  if (groupFailed && userFailed) {
+    logError("Both subscription sources failed", {group: groupResult, user: userResult})
+    renderSubscriptions([])
+    const empty = document.getElementById("subsEmpty")
+    if (empty) empty.hidden = true
+    setSubsStatus("Failed to load your subscriptions.", "error")
     return
   }
 
-  for (const subscription of subscriptions) {
-    const item = document.createElement("div")
-    item.className = "user-sub-item"
+  renderSubscriptions(rows)
 
-    const name = document.createElement("span")
-    name.className = "user-sub-item__name"
-    name.textContent = subscription.subscriptionName || subscription.subscriptionId
-    item.appendChild(name)
-
-    const meta = document.createElement("span")
-    meta.className = "user-sub-item__meta"
-    const parts = [subscription.state, subscription.scope].filter(Boolean)
-    meta.textContent = parts.join(" · ")
-    item.appendChild(meta)
-
-    list.appendChild(item)
+  if (groupFailed || userFailed) {
+    const failed = groupFailed ? "group" : "user"
+    setSubsStatus(`Loaded subscriptions, but the ${failed} subscriptions could not be loaded.`, "error")
+  } else {
+    setSubsStatus("")
   }
 }
 
@@ -254,7 +315,7 @@ function setupUserPanel(apiFetch: ApiFetch, scope: string): void {
       }
       setStatus("userStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
-      await loadUserSubscriptions(apiFetch)
+      await refreshSubscriptions(apiFetch)
     } catch (error) {
       logError("Failed to create user subscription", error)
       setStatus("userStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
@@ -265,13 +326,13 @@ function setupUserPanel(apiFetch: ApiFetch, scope: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Team subscription panel: pick an APIM group + create form.
+// Group subscription panel: pick an APIM group + create form.
 // ---------------------------------------------------------------------------
 async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
   const groupSelect = document.getElementById("entraIdGroup") as HTMLSelectElement | null
 
   if (!userId) {
-    setStatus("teamStatus", "Unable to determine the current user.", "error")
+    setStatus("groupStatus", "Unable to determine the current user.", "error")
     return
   }
 
@@ -287,7 +348,7 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
     if (groupSelect) {
       groupSelect.innerHTML = ""
       if (groups.length === 0) {
-        setStatus("teamStatus", "You are not a member of any APIM group.", "error")
+        setStatus("groupStatus", "You are not a member of any APIM group.", "error")
       }
       for (const group of groups) {
         const option = document.createElement("option")
@@ -298,45 +359,46 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
     }
   } catch (error) {
     logError("Failed to load APIM groups", error)
-    setStatus("teamStatus", `Failed to load your APIM groups: ${describeError(error)}`, "error")
+    setStatus("groupStatus", `Failed to load your APIM groups: ${describeError(error)}`, "error")
   }
 }
 
-function setupTeamPanel(apiFetch: ApiFetch, scope: string): void {
-  const form = document.getElementById("teamForm") as HTMLFormElement | null
-  const nameInput = document.getElementById("teamSubscriptionName") as HTMLInputElement | null
+function setupGroupPanel(apiFetch: ApiFetch, scope: string): void {
+  const form = document.getElementById("groupForm") as HTMLFormElement | null
+  const nameInput = document.getElementById("groupSubscriptionName") as HTMLInputElement | null
   const groupSelect = document.getElementById("entraIdGroup") as HTMLSelectElement | null
-  const submitButton = document.getElementById("teamSubmit") as HTMLButtonElement | null
+  const submitButton = document.getElementById("groupSubmit") as HTMLButtonElement | null
 
   form?.addEventListener("submit", async event => {
     event.preventDefault()
     const subscriptionName = nameInput?.value.trim()
     const entraIdGroup = groupSelect?.value
     if (!subscriptionName || !entraIdGroup) {
-      setStatus("teamStatus", "Please provide a subscription name and select a group.", "error")
+      setStatus("groupStatus", "Please provide a subscription name and select a group.", "error")
       return
     }
 
     if (submitButton) submitButton.disabled = true
-    setStatus("teamStatus", "Creating subscription…")
+    setStatus("groupStatus", "Creating subscription…")
     try {
-      const teamName = groupSelect?.selectedOptions[0]?.textContent ?? ""
-      logInfo("POST /apim/team-subscriptions", {subscriptionName, entraIdGroup, teamName, scope})
-      const response = await apiFetch("/apim/team-subscriptions", {
+      const groupName = groupSelect?.selectedOptions[0]?.textContent ?? ""
+      logInfo("POST /apim/group-subscriptions", {subscriptionName, entraIdGroup, groupName, scope})
+      const response = await apiFetch("/apim/group-subscriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({subscriptionName, entraIdGroup, teamName, scope}),
+        body: JSON.stringify({subscriptionName, entraIdGroup, groupName, scope}),
       })
-      logInfo("POST /apim/team-subscriptions response", {status: response.status, ok: response.ok})
+      logInfo("POST /apim/group-subscriptions response", {status: response.status, ok: response.ok})
       if (!response.ok) {
         const body = await readBodySafe(response)
         throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
       }
-      setStatus("teamStatus", "Subscription created successfully.", "success")
+      setStatus("groupStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
+      await refreshSubscriptions(apiFetch)
     } catch (error) {
-      logError("Failed to create team subscription", error)
-      setStatus("teamStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
+      logError("Failed to create group subscription", error)
+      setStatus("groupStatus", `Failed to create the subscription: ${describeError(error)}`, "error")
     } finally {
       if (submitButton) submitButton.disabled = false
     }

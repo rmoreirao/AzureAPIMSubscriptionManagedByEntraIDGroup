@@ -12,6 +12,94 @@ body {
   width: 100%;
 }
 
+/* --- Active subscriptions table (user + group) --- */
+.subs {
+  margin: 0 0 4px;
+}
+
+.subs-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 8px;
+}
+
+.subs-head__title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #605e5c;
+  margin: 0;
+}
+
+.subs-count {
+  font-size: 12px;
+  color: #605e5c;
+}
+
+/* Same table grid as the cw-group-subscriptions widget. */
+.group-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.group-table th,
+.group-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #edebe9;
+  vertical-align: middle;
+}
+
+.group-table th {
+  font-weight: 600;
+  color: #605e5c;
+  border-bottom: 2px solid #c8c6c4;
+}
+
+.group-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pill--user {
+  color: #5c2e91;
+  background: #f3eefb;
+}
+
+.pill--group {
+  color: #0b6a0b;
+  background: #eafaea;
+}
+
+/* Divider that introduces the create flow. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e1dfdd;
+}
+
 /* --- Step 1: chooser cards --- */
 .subscription-type__title {
   font-size: 18px;
@@ -82,36 +170,11 @@ body {
   text-decoration: underline;
 }
 
-/* --- User subscription list --- */
-.user-sub-list {
-  margin: 0 0 16px;
-}
-
+/* --- Active subscriptions empty state --- */
 .user-sub-empty {
   font-size: 14px;
   color: #605e5c;
-  margin: 0 0 8px;
-}
-
-.user-sub-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  border: 1px solid #edebe9;
-  border-radius: 4px;
-  margin-bottom: 8px;
-  background: #faf9f8;
-}
-
-.user-sub-item__name {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.user-sub-item__meta {
-  font-size: 12px;
-  color: #605e5c;
+  margin: 8px 0 0;
 }
 
 /* --- Forms --- */

@@ -1,6 +1,6 @@
 # AzureAPIMSubscriptionManagedByEntraIDGroup
 
-Self-service **team subscriptions** for Azure API Management, where access to a subscription's
+Self-service **group subscriptions** for Azure API Management, where access to a subscription's
 keys is governed by membership of an **Entra ID group** rather than by a single owner.
 
 ## Architecture
@@ -15,7 +15,7 @@ The diagram below is exported automatically from [docs/diagram.drawio](docs/diag
 |----------|-----------|------|
 | API Management | **Developer** (Dev Portal enabled) | Developer portal + Custom API facade |
 | Function App | Linux, **Consumption (Y1)**, .NET 8 isolated | Backend "Custom APIM API" |
-| Cosmos DB | NoSQL, **Serverless**, `disableLocalAuth` | Team subscription store |
+| Cosmos DB | NoSQL, **Serverless**, `disableLocalAuth` | Group subscription store |
 | Storage Account | Standard LRS | Functions runtime store |
 | Application Insights + Log Analytics | Pay-as-you-go | Telemetry |
 
@@ -48,18 +48,18 @@ reject any request that fails validation with **401**, and any cross-group acces
 | GET | `/api/users/{userId}/groups` | List the user's Entra ID groups (Graph). Only the authenticated user may read their own groups. |
 | POST | `/api/user-subscriptions` | Create an APIM subscription owned by the authenticated caller (personal/user subscription). |
 | GET | `/api/user-subscriptions` | List the APIM subscriptions owned by the authenticated caller. |
-| POST | `/api/team-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target group. |
-| GET | `/api/team-subscriptions` | List subscriptions for the caller's groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/team-subscriptions/{entraIdGroup}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the group that owns the subscription. |
+| POST | `/api/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target group. |
+| GET | `/api/group-subscriptions` | List subscriptions for the caller's groups (resolved server-side), enriched with current APIM keys. |
+| POST | `/api/group-subscriptions/{entraIdGroup}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the group that owns the subscription. |
 
-> **Note:** `GET /api/team-subscriptions` no longer accepts a `?groups=` query parameter — the
+> **Note:** `GET /api/group-subscriptions` no longer accepts a `?groups=` query parameter — the
 > caller's groups are resolved from the authenticated user, so a user can only ever see subscriptions
 > for groups they belong to.
 
 ### APIM-group endpoints (Dev Portal not yet connected to Entra ID)
 
 A parallel set of endpoints resolves group membership from the **APIM Groups** (built-in
-`Administrators`/`Developers`/`Guests` plus any custom groups such as `Team1`/`Team2`/`Team3`)
+`Administrators`/`Developers`/`Guests` plus any custom groups such as `Group1`/`Group2`/`Group3`)
 instead of Entra ID. Use these when the Developer Portal is **not** federated with Entra ID. They are
 backed by new `…Apim` Functions and an `ApimGroupService` that calls the APIM control plane via the
 Function's managed identity (which already holds *API Management Service Contributor*) — no Graph
@@ -68,12 +68,12 @@ permissions required. The existing Entra-ID endpoints above are unchanged.
 | Method | Route | Purpose |
 |--------|-------|---------|
 | GET | `/api/apim/users/{userId}/groups` | List the user's **APIM** groups. Only the authenticated user may read their own groups. |
-| POST | `/api/apim/team-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target APIM group. |
-| GET | `/api/apim/team-subscriptions` | List subscriptions for the caller's APIM groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/apim/team-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the APIM group that owns the subscription. |
+| POST | `/api/apim/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target APIM group. |
+| GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's APIM groups (resolved server-side), enriched with current APIM keys. |
+| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the APIM group that owns the subscription. |
 
 > Both endpoint families share the same Cosmos container; the group identifier (an APIM group id like
-> `Team1`, or an Entra group id) is stored opaquely in the record's group field. The custom widgets
+> `Group1`, or an Entra group id) is stored opaquely in the record's group field. The custom widgets
 > point at the `/api/apim/...` endpoints.
 
 
@@ -90,7 +90,7 @@ Each request must carry:
 | `xmh-origin` | `secrets.parentLocation.origin` | Dev Portal origin |
 | `xmh-hostName` | `secrets.parentLocation.hostname` | Dev Portal hostname |
 
-The `RequestAuthService` (in `src/TeamSubscriptions.Functions/Security`) validates that the SAS token
+The `RequestAuthService` (in `src/GroupSubscriptions.Functions/Security`) validates that the SAS token
 belongs to the claimed user, that the origin matches the configured Dev Portal (`DevPortal__Url`),
 and — as the decisive proof — calls the APIM **management API** with the SAS token (only APIM can
 validate a delegation token). Set `DevPortal__Url` to your portal URL (e.g.
@@ -98,7 +98,7 @@ validate a delegation token). Set `DevPortal__Url` to your portal URL (e.g.
 
 Because the Function App runs on the **Flex Consumption** plan — which ignores the platform-managed
 CORS setting — CORS is enforced **in code** by `CorsMiddleware` and the `CorsPreflight` (OPTIONS)
-function in `src/TeamSubscriptions.Functions`. Both echo the configured `DevPortal__Url` origin, so
+function in `src/GroupSubscriptions.Functions`. Both echo the configured `DevPortal__Url` origin, so
 keeping `DevPortal__Url` correct is what allows the browser widgets to call the Functions.
 
 The three custom widgets that drive these flows live in [`src/widgets`](src/widgets/README.md).
@@ -177,7 +177,7 @@ These reflect choices validated against a Microsoft-internal sponsored (MCAP) su
 ### Local development
 
 ```bash
-cd src/TeamSubscriptions.Functions
+cd src/GroupSubscriptions.Functions
 cp local.settings.json.sample local.settings.json   # fill in your values
 func start
 ```

@@ -1,26 +1,26 @@
-# Team Subscription custom widgets
+# Group Subscription custom widgets
 
 Azure API Management **Developer Portal custom widgets** (vanilla TypeScript, scaffolded with
 [`@azure/api-management-custom-widgets-tools`](https://aka.ms/apimdocs/portal/customwidgets)) that
-drive the team-subscription flows. They call the [`TeamSubscriptions.Functions`](../TeamSubscriptions.Functions)
+drive the group-subscription flows. They call the [`GroupSubscriptions.Functions`](../GroupSubscriptions.Functions)
 backend **directly**, forwarding the logged-in user's APIM delegation SAS token and `xmh-*` context
 headers so the Functions can confirm the request comes from a valid Dev Portal user.
 
 | Widget | Folder | Flow | Backend calls |
 |--------|--------|------|---------------|
-| **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows the *User Subscription* / *Team Subscription* chooser, then swaps (via JS, no redirects) to either the user panel (lists the caller's subscriptions + create form) or the team-subscription create form. A *Back* link returns to the chooser. | `GET`/`POST /user-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
-| **Subscription Type** | `cw-subscription-type` | Lets the user choose *User Subscription* vs *Team Subscription* and navigates accordingly. | none (navigation only) |
-| **Create Team Subscription** | `cw-create-team-subscription` | Lists the caller's existing **user *and* team** subscriptions in a compact **Type / Group / Name** table, then a form (*Subscription Name* + *APIM Group*, populated with the caller's groups) to create a standalone APIM subscription bound to the group. The list refreshes after a successful create. | `GET /apim/team-subscriptions`, `GET /user-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/team-subscriptions` |
-| **Subscriptions** | `cw-team-subscriptions` | Single table listing the caller's **user *and* team** subscriptions (Name, Type, Group, Product, State, Primary/Secondary Key, Date created) with a per-row "⋯" menu (*Show keys*, *Regenerate keys*, *Cancel subscription*). Inactive subscriptions show "The subscription is not active" instead of keys. | `GET /apim/team-subscriptions`, `GET /user-subscriptions`, `POST /apim/team-subscriptions/{group}/{subId}/{regenerate\|cancel}`, `POST /user-subscriptions/{subId}/{regenerate\|cancel}` |
+| **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows an **Active subscriptions** table (the caller's **user *and* group** subscriptions, columns **Type / Group / Name**), then a *User Subscription* / *Group Subscription* chooser that swaps (via JS, no redirects) to either the user create form or the group-subscription create form. A *Back* link returns to the chooser, and the table refreshes after a successful create. | `GET`/`POST /user-subscriptions`, `GET /apim/group-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/group-subscriptions` |
+| **Subscription Type** | `cw-subscription-type` | Lets the user choose *User Subscription* vs *Group Subscription* and navigates accordingly. | none (navigation only) |
+| **Subscriptions** | `cw-group-subscriptions` | Single table listing the caller's **user *and* group** subscriptions (Name, Type, Group, Product, State, Primary/Secondary Key, Date created) with a per-row "⋯" menu (*Show keys*, *Regenerate keys*, *Cancel subscription*). Inactive subscriptions show "The subscription is not active" instead of keys. | `GET /apim/group-subscriptions`, `GET /user-subscriptions`, `POST /apim/group-subscriptions/{group}/{subId}/{regenerate\|cancel}`, `POST /user-subscriptions/{subId}/{regenerate\|cancel}` |
 
-> The team-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
+> The group-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
 > membership from the APIM Groups rather than Entra ID (the Dev Portal is not yet federated with Entra
-> ID). The equivalent Entra-ID endpoints (`/users/{userId}/groups`, `/team-subscriptions`) still exist
+> ID). The equivalent Entra-ID endpoints (`/users/{userId}/groups`, `/group-subscriptions`) still exist
 > on the backend and are unchanged.
 
 > **`cw-custom-product-subscription`** merges the navigation-only `cw-subscription-type` and the
-> `cw-create-team-subscription` flows into a single widget that shows/hides its panels with JavaScript
-> instead of redirecting between pages. The two original widgets are kept for backwards compatibility.
+> former standalone group-subscription create flow into a single widget that shows/hides its panels
+> with JavaScript instead of redirecting between pages. `cw-subscription-type` is kept for
+> backwards compatibility.
 
 ## How requests are authenticated
 
@@ -37,21 +37,21 @@ xmh-hostName:         <hostname>    // secrets.parentLocation.hostname
 ```
 
 The Functions validate these headers (see the backend
-[`Security`](../TeamSubscriptions.Functions/Security) folder and the
+[`Security`](../GroupSubscriptions.Functions/Security) folder and the
 [README auth section](../../README.md#dev-portal-authentication)).
 
 ## Configuration (widget editor)
 
 Each widget exposes editor values configured in the Dev Portal admin:
 
-- **Custom Product Subscription** — chooser title, the two card labels/descriptions, the user/team
+- **Custom Product Subscription** — chooser title, the two card labels/descriptions, the user/group
   panel titles, `functionBaseUrl`, and `scope`. The subscription scope is auto-derived from the
   hosting product page (`/product#product={id}` → `/products/{id}`); `scope` is only a fallback used
   when the widget is not on a product page (default `/apis` = all APIs).
 - **Subscription Type** — labels, descriptions and target URLs for the two options.
-- **Create Team Subscription** — `functionBaseUrl`, `scope` (APIM scope, default `/apis`),
+- **Create Group Subscription** — `functionBaseUrl`, `scope` (APIM scope, default `/apis`),
   `successRedirectUrl`, and title.
-- **Teams Subscriptions** — `functionBaseUrl` and title.
+- **Group Subscriptions** — `functionBaseUrl` and title.
 
 `functionBaseUrl` is the deployed Function App API base, e.g.
 `https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api`. The Function App must allow the Dev Portal origin in
@@ -78,7 +78,7 @@ widgets:
 ./deploy-widgets.ps1 -ResourceGroup <rg> -ServiceName <apim-service> [-SubscriptionId <sub>]
 
 # a single widget
-./deploy-widgets.ps1 -Widget cw-team-subscriptions -ResourceGroup <rg> -ServiceName <apim-service>
+./deploy-widgets.ps1 -Widget cw-group-subscriptions -ResourceGroup <rg> -ServiceName <apim-service>
 
 # preview the resolved config without pushing anything
 ./deploy-widgets.ps1 -DryRun -ResourceGroup <rg> -ServiceName <apim-service>

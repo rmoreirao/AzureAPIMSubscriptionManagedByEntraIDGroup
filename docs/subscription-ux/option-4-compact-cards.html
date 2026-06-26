@@ -20,13 +20,13 @@
     .subs-head h3 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0; }
     .subs-count { font-size:12px; color:var(--muted); }
 
-    /* same grid as the cw-team-subscriptions widget */
-    .team-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .team-table th, .team-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #edebe9; vertical-align:middle; }
-    .team-table th { font-weight:600; color:var(--muted); border-bottom:2px solid #c8c6c4; }
-    .team-table tbody tr:last-child td { border-bottom:none; }
+    /* same grid as the cw-group-subscriptions widget */
+    .group-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .group-table th, .group-table td { text-align:left; padding:8px 10px; border-bottom:1px solid #edebe9; vertical-align:middle; }
+    .group-table th { font-weight:600; color:var(--muted); border-bottom:2px solid #c8c6c4; }
+    .group-table tbody tr:last-child td { border-bottom:none; }
     .pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
-    .pill.user { color:#5c2e91; background:#f3eefb; } .pill.team { color:#0b6a0b; background:#eafaea; }
+    .pill.user { color:#5c2e91; background:#f3eefb; } .pill.group { color:#0b6a0b; background:#eafaea; }
 
     .divider { display:flex; align-items:center; gap:12px; margin:22px 0 16px; color:var(--ink); font-size:14px; font-weight:600; }
     .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
@@ -71,9 +71,9 @@
           <span class="ic">👤</span>
           <span class="t"><b>Personal</b><small>Tied to your account</small></span>
         </div>
-        <div class="opt" id="optTeam" data-type="team">
+        <div class="opt" id="optGroup" data-type="group">
           <span class="ic">👥</span>
-          <span class="t"><b>Team</b><small>Managed by an APIM group</small></span>
+          <span class="t"><b>Group</b><small>Managed by an APIM group</small></span>
         </div>
       </div>
 
@@ -94,10 +94,10 @@
   </div>
 
   <script>
-    const groups = [{id:"g1",name:"Payments Team"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
+    const groups = [{id:"g1",name:"Payments Group"},{id:"g2",name:"Identity Platform"},{id:"g3",name:"Data & Analytics"}];
     let subscriptions = [
       { name:"Payments API – Prod", group:"", type:"user" },
-      { name:"Checkout – Team A", group:"Payments Team", type:"team" },
+      { name:"Checkout – Group A", group:"Payments Group", type:"group" },
     ];
     let type = "user";
     const $ = id => document.getElementById(id);
@@ -106,13 +106,13 @@
       const el = $("subs");
       const rows = subscriptions.map(s => `
         <tr>
-          <td><span class="pill ${s.type}">${s.type === "user" ? "User" : "Team"}</span></td>
+          <td><span class="pill ${s.type}">${s.type === "user" ? "User" : "Group"}</span></td>
           <td>${s.group || "—"}</td>
           <td>${s.name}</td>
         </tr>`).join("");
       el.innerHTML = `
         <div class="subs-head"><h3>Active subscriptions</h3><span class="subs-count">${subscriptions.length} total</span></div>
-        <table class="team-table">
+        <table class="group-table">
           <thead><tr><th>Type</th><th>Group</th><th>Name</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
@@ -121,21 +121,21 @@
     function selectType(t) {
       type = t;
       $("optUser").classList.toggle("sel", t === "user");
-      $("optTeam").classList.toggle("sel", t === "team");
-      $("groupField").hidden = t !== "team";
-      $("submit").textContent = t === "user" ? "Subscribe" : "Create team subscription";
+      $("optGroup").classList.toggle("sel", t === "group");
+      $("groupField").hidden = t !== "group";
+      $("submit").textContent = t === "user" ? "Subscribe" : "Create group subscription";
       $("status").textContent = "";
     }
 
     $("group").innerHTML = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
     $("optUser").onclick = () => selectType("user");
-    $("optTeam").onclick = () => selectType("team");
+    $("optGroup").onclick = () => selectType("group");
 
     $("form").addEventListener("submit", e => {
       e.preventDefault();
       const name = $("name").value.trim();
       if (!name) { $("status").className = "status err"; $("status").textContent = "Please provide a subscription name."; return; }
-      const group = type === "team" ? $("group").selectedOptions[0].textContent : "";
+      const group = type === "group" ? $("group").selectedOptions[0].textContent : "";
       subscriptions.push({ name, group, type });
       $("name").value = "";
       renderSubs();

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Deploys one or all Team Subscription custom widgets to an APIM Developer Portal.
+  Deploys one or all Group Subscription custom widgets to an APIM Developer Portal.
 
 .DESCRIPTION
   Exports the APIM service coordinates as environment variables (consumed by each widget's
@@ -10,7 +10,7 @@
 
 .PARAMETER Widget
   Which widget to deploy: "all" (default) or one of cw-subscription-type,
-  cw-create-team-subscription, cw-team-subscriptions, cw-custom-product-subscription.
+  cw-group-subscriptions, cw-custom-product-subscription.
 
 .PARAMETER SubscriptionId
   Azure subscription id of the APIM service. Defaults to $env:APIM_SUBSCRIPTION_ID, then `az account show`.
@@ -44,11 +44,11 @@
   ./deploy-widgets.ps1 -ResourceGroup rg-apimteam-dev -ServiceName apimteam-apim-3dexfwdm3jz34
 
 .EXAMPLE
-  ./deploy-widgets.ps1 -Widget cw-team-subscriptions -DryRun
+  ./deploy-widgets.ps1 -Widget cw-group-subscriptions -DryRun
 #>
 [CmdletBinding()]
 param(
-  [ValidateSet("all", "cw-subscription-type", "cw-create-team-subscription", "cw-team-subscriptions", "cw-custom-product-subscription")]
+  [ValidateSet("all", "cw-subscription-type", "cw-group-subscriptions", "cw-custom-product-subscription")]
   [string]$Widget = "all",
   [string]$SubscriptionId = $env:APIM_SUBSCRIPTION_ID,
   [string]$ResourceGroup = $env:APIM_RESOURCE_GROUP,
@@ -66,7 +66,7 @@ $ErrorActionPreference = "Stop"
 # .../src/widgets (this script lives in .../src/widgets/scripts)
 $widgetsRoot = Split-Path -Parent $PSScriptRoot
 
-$allWidgets = @("cw-subscription-type", "cw-create-team-subscription", "cw-team-subscriptions", "cw-custom-product-subscription")
+$allWidgets = @("cw-subscription-type", "cw-group-subscriptions", "cw-custom-product-subscription")
 $targets = if ($Widget -eq "all") { $allWidgets } else { @($Widget) }
 
 # Fall back to the current az subscription if none was provided.

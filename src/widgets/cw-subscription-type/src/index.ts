@@ -30,12 +30,12 @@ setupOption(
 )
 
 setupOption(
-  "teamSubscription",
-  "teamSubscriptionLabel",
-  "teamSubscriptionDescription",
-  values.teamSubscriptionLabel,
-  values.teamSubscriptionDescription,
-  values.teamSubscriptionUrl
+  "groupSubscription",
+  "groupSubscriptionLabel",
+  "groupSubscriptionDescription",
+  values.groupSubscriptionLabel,
+  values.groupSubscriptionDescription,
+  values.groupSubscriptionUrl
 )
 
 export type {Values}

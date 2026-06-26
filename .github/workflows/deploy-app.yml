@@ -14,7 +14,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  PROJECT_PATH: src/TeamSubscriptions.Functions
+  PROJECT_PATH: src/GroupSubscriptions.Functions
   PUBLISH_DIR: ${{ github.workspace }}/publish
 
 jobs:

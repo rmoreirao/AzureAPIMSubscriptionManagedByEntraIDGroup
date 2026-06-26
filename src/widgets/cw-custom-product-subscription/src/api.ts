@@ -1,7 +1,7 @@
 import {Secrets} from "@azure/api-management-custom-widgets-tools"
 
 /**
- * Builds an authenticated fetch wrapper that calls the Team Subscriptions Azure Functions directly.
+ * Builds an authenticated fetch wrapper that calls the Group Subscriptions Azure Functions directly.
  *
  * The Dev Portal `secrets` provide the user's APIM delegation SAS token plus context, which we
  * forward as the `xmh-*` headers the Functions validate to confirm the caller is a logged-in

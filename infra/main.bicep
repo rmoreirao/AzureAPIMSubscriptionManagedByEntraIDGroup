@@ -21,7 +21,7 @@ param functionAuthResource string = ''
 
 @description('Tags applied to all resources.')
 param tags object = {
-  workload: 'apim-team-subscriptions'
+  workload: 'apim-group-subscriptions'
   managedBy: 'bicep'
 }
 
