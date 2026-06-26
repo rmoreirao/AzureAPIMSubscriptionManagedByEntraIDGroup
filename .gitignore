@@ -435,3 +435,5 @@ publish/
 samples/
 
 .playwright-cli/
+# Local operational recovery script (not for source control)
+fix-storage-non-public.ps1

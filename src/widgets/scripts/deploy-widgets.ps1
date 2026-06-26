@@ -9,8 +9,8 @@
   `az account show` context when omitted.
 
 .PARAMETER Widget
-  Which widget to deploy: "all" (default) or one of cw-subscription-type,
-  cw-group-subscriptions, cw-custom-product-subscription.
+  Which widget to deploy: "all" (default) or one of cw-group-subscriptions,
+  cw-custom-product-subscription.
 
 .PARAMETER SubscriptionId
   Azure subscription id of the APIM service. Defaults to $env:APIM_SUBSCRIPTION_ID, then `az account show`.
@@ -48,7 +48,7 @@
 #>
 [CmdletBinding()]
 param(
-  [ValidateSet("all", "cw-subscription-type", "cw-group-subscriptions", "cw-custom-product-subscription")]
+  [ValidateSet("all", "cw-group-subscriptions", "cw-custom-product-subscription")]
   [string]$Widget = "all",
   [string]$SubscriptionId = $env:APIM_SUBSCRIPTION_ID,
   [string]$ResourceGroup = $env:APIM_RESOURCE_GROUP,
@@ -66,7 +66,7 @@ $ErrorActionPreference = "Stop"
 # .../src/widgets (this script lives in .../src/widgets/scripts)
 $widgetsRoot = Split-Path -Parent $PSScriptRoot
 
-$allWidgets = @("cw-subscription-type", "cw-group-subscriptions", "cw-custom-product-subscription")
+$allWidgets = @("cw-group-subscriptions", "cw-custom-product-subscription")
 $targets = if ($Widget -eq "all") { $allWidgets } else { @($Widget) }
 
 # Fall back to the current az subscription if none was provided.

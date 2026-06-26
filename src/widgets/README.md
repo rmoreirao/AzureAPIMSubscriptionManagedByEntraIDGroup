@@ -9,7 +9,6 @@ headers so the Functions can confirm the request comes from a valid Dev Portal u
 | Widget | Folder | Flow | Backend calls |
 |--------|--------|------|---------------|
 | **Custom Product Subscription** | `cw-custom-product-subscription` | All-in-one widget: shows an **Active subscriptions** table (the caller's **user *and* group** subscriptions, columns **Type / Group / Name**), then a *User Subscription* / *Group Subscription* chooser that swaps (via JS, no redirects) to either the user create form or the group-subscription create form. A *Back* link returns to the chooser, and the table refreshes after a successful create. | `GET`/`POST /user-subscriptions`, `GET /apim/group-subscriptions`, `GET /apim/users/{userId}/groups`, `POST /apim/group-subscriptions` |
-| **Subscription Type** | `cw-subscription-type` | Lets the user choose *User Subscription* vs *Group Subscription* and navigates accordingly. | none (navigation only) |
 | **Subscriptions** | `cw-group-subscriptions` | Single table listing the caller's **user *and* group** subscriptions (Name, Type, Group, Product, State, Primary/Secondary Key, Date created) with a per-row "⋯" menu (*Show keys*, *Regenerate keys*, *Cancel subscription*). Inactive subscriptions show "The subscription is not active" instead of keys. | `GET /apim/group-subscriptions`, `GET /user-subscriptions`, `POST /apim/group-subscriptions/{group}/{subId}/{regenerate\|cancel}`, `POST /user-subscriptions/{subId}/{regenerate\|cancel}` |
 
 > The group-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
@@ -17,10 +16,9 @@ headers so the Functions can confirm the request comes from a valid Dev Portal u
 > ID). The equivalent Entra-ID endpoints (`/users/{userId}/groups`, `/group-subscriptions`) still exist
 > on the backend and are unchanged.
 
-> **`cw-custom-product-subscription`** merges the navigation-only `cw-subscription-type` and the
-> former standalone group-subscription create flow into a single widget that shows/hides its panels
-> with JavaScript instead of redirecting between pages. `cw-subscription-type` is kept for
-> backwards compatibility.
+> **`cw-custom-product-subscription`** merges the former navigation-only subscription-type widget and
+> the former standalone group-subscription create flow into a single widget that shows/hides its panels
+> with JavaScript instead of redirecting between pages.
 
 ## How requests are authenticated
 
