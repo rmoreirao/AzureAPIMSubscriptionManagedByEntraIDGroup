@@ -15,6 +15,10 @@ public sealed class ApimManagementService
     // when many subscriptions share the same product within a single list request.
     private readonly Dictionary<string, string> _productNameCache = new(StringComparer.OrdinalIgnoreCase);
 
+    // Caches resolved product "Subscriptions limit" values (keyed by product id). The bool tracks
+    // whether the product itself was found; the int? is the limit (null = unlimited).
+    private readonly Dictionary<string, (bool Found, int? Limit)> _productLimitCache = new(StringComparer.OrdinalIgnoreCase);
+
     public ApimManagementService(ArmClient arm, ApimOptions options)
     {
         _arm = arm;
@@ -39,6 +43,104 @@ public sealed class ApimManagementService
     private static bool OwnerMatches(string? ownerId, string userId) =>
         !string.IsNullOrEmpty(ownerId) &&
         ownerId.TrimEnd('/').EndsWith($"/users/{userId}", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Extracts the product id from an APIM subscription scope of the form <c>.../products/{id}</c>.
+    /// Returns <c>null</c> for non-product scopes (e.g. <c>/apis</c>) or unrecognised shapes.
+    /// </summary>
+    public static string? ParseProductId(string? scope)
+    {
+        if (string.IsNullOrWhiteSpace(scope))
+        {
+            return null;
+        }
+
+        var trimmed = scope.TrimEnd('/');
+        const string productMarker = "/products/";
+        var index = trimmed.IndexOf(productMarker, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var productId = trimmed[(index + productMarker.Length)..].Split('/')[0];
+        return string.IsNullOrWhiteSpace(productId) ? null : productId;
+    }
+
+    /// <summary>
+    /// Resolves a product's friendly display name (used in limit-breach messages). Falls back to the id.
+    /// </summary>
+    public Task<string> GetProductDisplayNameAsync(string productId, CancellationToken ct = default) =>
+        GetProductDisplayNameCoreAsync(productId, ct);
+
+    /// <summary>
+    /// Returns a product's configured "Subscriptions limit" (APIM <c>SubscriptionsLimit</c>):
+    /// <c>null</c> means unlimited (no limit configured, or the product could not be read).
+    /// </summary>
+    public async Task<int?> GetProductSubscriptionsLimitAsync(string productId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(productId))
+        {
+            return null;
+        }
+
+        if (_productLimitCache.TryGetValue(productId, out var cached))
+        {
+            return cached.Limit;
+        }
+
+        int? limit = null;
+        try
+        {
+            var id = ApiManagementProductResource.CreateResourceIdentifier(
+                _options.SubscriptionId,
+                _options.ResourceGroup,
+                _options.ServiceName,
+                productId);
+            var product = await _arm.GetApiManagementProductResource(id).GetAsync(cancellationToken: ct);
+            limit = product.Value.Data.SubscriptionsLimit;
+            _productLimitCache[productId] = (true, limit);
+        }
+        catch (RequestFailedException)
+        {
+            // Product not found / inaccessible — treat as unlimited so we never block on a read failure.
+            _productLimitCache[productId] = (false, null);
+        }
+
+        return limit;
+    }
+
+    /// <summary>
+    /// Counts the active (non-cancelled) APIM subscriptions owned by the given user that are scoped to
+    /// the given product.
+    /// </summary>
+    public async Task<int> CountUserSubscriptionsForProductAsync(string userId, string productId, CancellationToken ct = default)
+    {
+        var service = GetService();
+        var collection = service.GetApiManagementSubscriptions();
+
+        var count = 0;
+        await foreach (var subscription in collection.GetAllAsync(cancellationToken: ct))
+        {
+            var data = subscription.Data;
+            if (!OwnerMatches(data.OwnerId, userId))
+            {
+                continue;
+            }
+
+            if (data.State == SubscriptionState.Cancelled)
+            {
+                continue;
+            }
+
+            if (string.Equals(ParseProductId(data.Scope), productId, StringComparison.OrdinalIgnoreCase))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
 
     /// <summary>Creates a standalone APIM subscription and returns its id + keys.</summary>
     public async Task<(string SubscriptionId, SubscriptionKeys Keys)> CreateSubscriptionAsync(
@@ -252,7 +354,7 @@ public sealed class ApimManagementService
             var productId = trimmed[(index + productMarker.Length)..].Split('/')[0];
             if (!string.IsNullOrWhiteSpace(productId))
             {
-                return await GetProductDisplayNameAsync(productId, ct);
+                return await GetProductDisplayNameCoreAsync(productId, ct);
             }
         }
 
@@ -260,7 +362,7 @@ public sealed class ApimManagementService
         return scope;
     }
 
-    private async Task<string> GetProductDisplayNameAsync(string productId, CancellationToken ct)
+    private async Task<string> GetProductDisplayNameCoreAsync(string productId, CancellationToken ct)
     {
         if (_productNameCache.TryGetValue(productId, out var cached))
         {

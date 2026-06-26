@@ -61,6 +61,38 @@ public sealed class CosmosRepository
         return results;
     }
 
+    /// <summary>
+    /// Counts the group subscription records for a group that are scoped to the given product.
+    /// Records persisted before product-scope tracking have an empty productId and therefore don't count.
+    /// </summary>
+    public async Task<int> CountByGroupAndProductAsync(string entraIdGroup, string productId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(productId))
+        {
+            return 0;
+        }
+
+        var query = new QueryDefinition(
+                "SELECT VALUE COUNT(1) FROM c WHERE c.entraIdGroup = @group AND c.productId = @productId")
+            .WithParameter("@group", entraIdGroup)
+            .WithParameter("@productId", productId);
+
+        using var iterator = _container.GetItemQueryIterator<int>(
+            query,
+            requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(entraIdGroup) });
+
+        var count = 0;
+        while (iterator.HasMoreResults)
+        {
+            foreach (var item in await iterator.ReadNextAsync(ct))
+            {
+                count += item;
+            }
+        }
+
+        return count;
+    }
+
     public async Task DeleteAsync(string id, string entraIdGroup, CancellationToken ct = default)
     {
         try

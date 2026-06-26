@@ -23,6 +23,14 @@ public sealed class GroupSubscription
     [JsonPropertyName("entraIdGroup")]
     public string EntraIdGroup { get; set; } = string.Empty;
 
+    /// <summary>The APIM scope this subscription was created with (e.g. <c>/products/{id}</c> or <c>/apis</c>).</summary>
+    [JsonPropertyName("scope")]
+    public string Scope { get; set; } = string.Empty;
+
+    /// <summary>The APIM product id parsed from <see cref="Scope"/>, or empty for non-product scopes. Stored for cheap per-product counting.</summary>
+    [JsonPropertyName("productId")]
+    public string ProductId { get; set; } = string.Empty;
+
     [JsonPropertyName("dateCreated")]
     public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
 }

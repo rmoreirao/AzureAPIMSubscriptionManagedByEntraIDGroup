@@ -75,6 +75,7 @@ var host = new HostBuilder()
         services.AddSingleton<GraphService>();
         services.AddSingleton<ApimGroupService>();
         services.AddSingleton<ApimManagementService>();
+        services.AddSingleton<SubscriptionLimitService>();
 
         // Dev Portal request authentication (validates the caller is a logged-in APIM Dev Portal user).
         services.AddHttpClient<ApimUserClient>();

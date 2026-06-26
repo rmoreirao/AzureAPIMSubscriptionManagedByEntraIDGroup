@@ -11,12 +11,14 @@ namespace GroupSubscriptions.Functions.Functions;
 public sealed class SaveUserSubscription
 {
     private readonly ApimManagementService _apim;
+    private readonly SubscriptionLimitService _limits;
     private readonly RequestAuthService _auth;
     private readonly ILogger<SaveUserSubscription> _logger;
 
-    public SaveUserSubscription(ApimManagementService apim, RequestAuthService auth, ILogger<SaveUserSubscription> logger)
+    public SaveUserSubscription(ApimManagementService apim, SubscriptionLimitService limits, RequestAuthService auth, ILogger<SaveUserSubscription> logger)
     {
         _apim = apim;
+        _limits = limits;
         _auth = auth;
         _logger = logger;
     }
@@ -43,6 +45,26 @@ public sealed class SaveUserSubscription
 
         var apimSubscriptionId = $"user-{Guid.NewGuid():N}";
         var scope = string.IsNullOrWhiteSpace(request.Scope) ? "/apis" : request.Scope;
+
+        // A subscription must target a specific APIM product.
+        var productId = ApimManagementService.ParseProductId(scope);
+        if (productId is null)
+        {
+            var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+            await bad.WriteStringAsync("A product is required to create a subscription. Provide a product scope (e.g. /products/{productId}).", ct);
+            return bad;
+        }
+
+        // Enforce the product's Max Subscriptions limit for this user.
+        var currentCount = await _apim.CountUserSubscriptionsForProductAsync(result.UserId, productId, ct);
+        var decision = await _limits.EvaluateAsync(productId, currentCount, SubscriptionLimitService.OwnerKind.User, ct);
+        if (!decision.Allowed)
+        {
+            _logger.LogWarning("User {UserId} reached the subscription limit for product {ProductId}", result.UserId, productId);
+            var conflict = req.CreateResponse(HttpStatusCode.Conflict);
+            await conflict.WriteStringAsync(decision.Message!, ct);
+            return conflict;
+        }
 
         // The subscription is always owned by the authenticated caller — never trust an owner from the client.
         _logger.LogInformation("Creating user APIM subscription {SubscriptionId} for user {UserId}", apimSubscriptionId, result.UserId);

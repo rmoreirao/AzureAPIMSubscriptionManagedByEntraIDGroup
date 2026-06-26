@@ -13,14 +13,16 @@ public sealed class SaveGroupSubscription
     private readonly ApimManagementService _apim;
     private readonly CosmosRepository _repository;
     private readonly GraphService _graph;
+    private readonly SubscriptionLimitService _limits;
     private readonly RequestAuthService _auth;
     private readonly ILogger<SaveGroupSubscription> _logger;
 
-    public SaveGroupSubscription(ApimManagementService apim, CosmosRepository repository, GraphService graph, RequestAuthService auth, ILogger<SaveGroupSubscription> logger)
+    public SaveGroupSubscription(ApimManagementService apim, CosmosRepository repository, GraphService graph, SubscriptionLimitService limits, RequestAuthService auth, ILogger<SaveGroupSubscription> logger)
     {
         _apim = apim;
         _repository = repository;
         _graph = graph;
+        _limits = limits;
         _auth = auth;
         _logger = logger;
     }
@@ -57,6 +59,26 @@ public sealed class SaveGroupSubscription
             ? "/apis"
             : request.Scope;
 
+        // A subscription must target a specific APIM product.
+        var productId = ApimManagementService.ParseProductId(scope);
+        if (productId is null)
+        {
+            var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+            await bad.WriteStringAsync("A product is required to create a subscription. Provide a product scope (e.g. /products/{productId}).", ct);
+            return bad;
+        }
+
+        // Enforce the product's Max Subscriptions limit for this team/group.
+        var currentCount = await _repository.CountByGroupAndProductAsync(request.EntraIdGroup, productId, ct);
+        var decision = await _limits.EvaluateAsync(productId, currentCount, SubscriptionLimitService.OwnerKind.Team, ct);
+        if (!decision.Allowed)
+        {
+            _logger.LogWarning("Group {Group} reached the subscription limit for product {ProductId}", request.EntraIdGroup, productId);
+            var conflict = req.CreateResponse(HttpStatusCode.Conflict);
+            await conflict.WriteStringAsync(decision.Message!, ct);
+            return conflict;
+        }
+
         _logger.LogInformation("Creating APIM subscription {SubscriptionId} for group {Group}", apimSubscriptionId, request.EntraIdGroup);
         var (createdId, keys) = await _apim.CreateSubscriptionAsync(apimSubscriptionId, request.SubscriptionName, scope, ct);
 
@@ -66,7 +88,9 @@ public sealed class SaveGroupSubscription
             GroupName = request.GroupName,
             SubscriptionId = createdId,
             SubscriptionName = request.SubscriptionName,
-            EntraIdGroup = request.EntraIdGroup
+            EntraIdGroup = request.EntraIdGroup,
+            Scope = scope,
+            ProductId = productId
         };
         await _repository.UpsertAsync(record, ct);
 

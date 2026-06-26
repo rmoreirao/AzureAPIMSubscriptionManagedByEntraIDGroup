@@ -43,6 +43,20 @@ widgets call the Functions directly and forward the user's APIM delegation SAS t
 `xmh-*` context headers (see [Dev Portal authentication](#dev-portal-authentication)); the Functions
 reject any request that fails validation with **401**, and any cross-group access with **403**.
 
+### Product & Max-Subscriptions enforcement
+
+Subscriptions are created through the APIM **management API**, which — unlike the Dev Portal — does
+**not** apply a product's settings. The create endpoints therefore enforce two product rules in the
+backend:
+
+- **A product is mandatory.** Every create request must carry a product scope (`/products/{productId}`).
+  Requests with no product (or an `/apis` "All APIs" scope) are rejected with **400 Bad Request**.
+- **The product's "Subscriptions limit" (Max Subscriptions) is respected**, independently **per user**
+  and **per team/group**. For a product with limit N, each user may hold at most N subscriptions for that
+  product, and each group may hold at most N. When the threshold is reached, creation is rejected with
+  **409 Conflict** and a message explaining the rule and the limit. Products with no limit configured are
+  unlimited.
+
 | Method | Route | Purpose |
 |--------|-------|---------|
 | GET | `/api/users/{userId}/groups` | List the user's Entra ID groups (Graph). Only the authenticated user may read their own groups. |
