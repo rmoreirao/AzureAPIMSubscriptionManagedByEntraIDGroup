@@ -72,19 +72,21 @@ backend:
 
 ### APIM-group endpoints (Dev Portal not yet connected to Entra ID)
 
-A parallel set of endpoints resolves group membership from the **APIM Groups** (built-in
-`Administrators`/`Developers`/`Guests` plus any custom groups such as `Group1`/`Group2`/`Group3`)
-instead of Entra ID. Use these when the Developer Portal is **not** federated with Entra ID. They are
-backed by new `…Apim` Functions and an `ApimGroupService` that calls the APIM control plane via the
-Function's managed identity (which already holds *API Management Service Contributor*) — no Graph
-permissions required. The existing Entra-ID endpoints above are unchanged.
+A parallel set of endpoints resolves group membership from the **APIM Groups** instead of Entra ID.
+Only **custom** APIM groups (e.g. `Team1`/`Team2`/`Team3`) are eligible — the built-in `system`
+groups (`Administrators`/`Developers`/`Guests`) and `external` groups are filtered out, both when
+listing a user's groups and when validating membership on subscription creation (a request targeting a
+system group is rejected with **403**). Use these when the Developer Portal is **not** federated with
+Entra ID. They are backed by new `…Apim` Functions and an `ApimGroupService` that calls the APIM
+control plane via the Function's managed identity (which already holds *API Management Service
+Contributor*) — no Graph permissions required. The existing Entra-ID endpoints above are unchanged.
 
 | Method | Route | Purpose |
 |--------|-------|---------|
-| GET | `/api/apim/users/{userId}/groups` | List the user's **APIM** groups. Only the authenticated user may read their own groups. |
-| POST | `/api/apim/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target APIM group. |
-| GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's APIM groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the APIM group that owns the subscription. |
+| GET | `/api/apim/users/{userId}/groups` | List the user's **custom APIM** groups. Only the authenticated user may read their own groups. |
+| POST | `/api/apim/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target **custom** APIM group. |
+| GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's custom APIM groups (resolved server-side), enriched with current APIM keys. |
+| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the custom APIM group that owns the subscription. |
 
 > Both endpoint families share the same Cosmos container; the group identifier (an APIM group id like
 > `Group1`, or an Entra group id) is stored opaquely in the record's group field. The custom widgets

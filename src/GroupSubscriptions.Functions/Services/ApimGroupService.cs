@@ -1,5 +1,6 @@
 using Azure.ResourceManager;
 using Azure.ResourceManager.ApiManagement;
+using Azure.ResourceManager.ApiManagement.Models;
 using GroupSubscriptions.Functions.Models;
 
 namespace GroupSubscriptions.Functions.Services;
@@ -31,7 +32,13 @@ public sealed class ApimGroupService
         return _arm.GetApiManagementUserResource(id);
     }
 
-    /// <summary>Returns the APIM groups the given Dev Portal user is a member of.</summary>
+    /// <summary>
+    /// Returns the <b>custom</b> APIM groups the given Dev Portal user is a member of. Built-in
+    /// <c>system</c> groups (Administrators/Developers/Guests) and <c>external</c> groups are excluded:
+    /// only custom groups (e.g. Team1/Team2/Team3) are eligible for group subscriptions. Because
+    /// <see cref="IsMemberOfGroupAsync"/> and the list endpoints all use this method, the custom-only
+    /// rule is enforced both when returning available groups and on subscription creation.
+    /// </summary>
     public async Task<IReadOnlyList<EntraGroup>> GetUserGroupsAsync(string userId, CancellationToken ct = default)
     {
         var groups = new List<EntraGroup>();
@@ -39,6 +46,11 @@ public sealed class ApimGroupService
 
         await foreach (var group in user.GetUserGroupsAsync(cancellationToken: ct))
         {
+            if (group.Data.GroupType != ApiManagementGroupType.Custom)
+            {
+                continue;
+            }
+
             groups.Add(new EntraGroup
             {
                 Id = group.Data.Name ?? string.Empty,
@@ -49,7 +61,11 @@ public sealed class ApimGroupService
         return groups;
     }
 
-    /// <summary>Returns true when the user is a member of the given APIM group.</summary>
+    /// <summary>
+    /// Returns true when the user is a member of the given APIM group. Only <b>custom</b> groups are
+    /// considered (see <see cref="GetUserGroupsAsync"/>), so a request targeting a built-in
+    /// <c>system</c> group resolves to false even if the user belongs to it.
+    /// </summary>
     public async Task<bool> IsMemberOfGroupAsync(string userId, string groupId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(groupId))
