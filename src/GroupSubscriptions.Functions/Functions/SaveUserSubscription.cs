@@ -68,7 +68,26 @@ public sealed class SaveUserSubscription
 
         // The subscription is always owned by the authenticated caller — never trust an owner from the client.
         _logger.LogInformation("Creating user APIM subscription {SubscriptionId} for user {UserId}", apimSubscriptionId, result.UserId);
-        var (createdId, keys) = await _apim.CreateUserSubscriptionAsync(apimSubscriptionId, request.SubscriptionName, result.UserId, scope, ct);
+        string createdId;
+        SubscriptionKeys keys;
+        try
+        {
+            (createdId, keys) = await _apim.CreateUserSubscriptionAsync(apimSubscriptionId, request.SubscriptionName, result.UserId, scope, ct);
+        }
+        catch (ApimSubscriptionLimitException ex)
+        {
+            _logger.LogWarning(ex, "APIM rejected subscription creation for product {ProductId} (limit reached)", productId);
+            var conflict = req.CreateResponse(HttpStatusCode.Conflict);
+            await conflict.WriteStringAsync($"Cannot create the subscription: the product's maximum number of subscriptions has been reached. ({ex.Message})", ct);
+            return conflict;
+        }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogError(ex, "APIM rejected subscription creation for product {ProductId}", productId);
+            var gateway = req.CreateResponse(HttpStatusCode.BadGateway);
+            await gateway.WriteStringAsync($"APIM rejected the subscription request: {ex.Message}", ct);
+            return gateway;
+        }
 
         var view = new UserSubscriptionView
         {

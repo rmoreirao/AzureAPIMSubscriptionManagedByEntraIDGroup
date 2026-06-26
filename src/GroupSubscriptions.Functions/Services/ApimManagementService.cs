@@ -159,7 +159,15 @@ public sealed class ApimManagementService
             State = SubscriptionState.Active
         };
 
-        var operation = await collection.CreateOrUpdateAsync(WaitUntil.Completed, subscriptionId, content, cancellationToken: ct);
+        ArmOperation<ApiManagementSubscriptionResource> operation;
+        try
+        {
+            operation = await collection.CreateOrUpdateAsync(WaitUntil.Completed, subscriptionId, content, cancellationToken: ct);
+        }
+        catch (RequestFailedException ex) when (IsSubscriptionsLimitError(ex))
+        {
+            throw new ApimSubscriptionLimitException(ex.Message, ex);
+        }
         var secrets = await operation.Value.GetSecretsAsync(cancellationToken: ct);
 
         return (operation.Value.Data.Name, new SubscriptionKeys
@@ -188,7 +196,15 @@ public sealed class ApimManagementService
             State = SubscriptionState.Active
         };
 
-        var operation = await collection.CreateOrUpdateAsync(WaitUntil.Completed, subscriptionId, content, cancellationToken: ct);
+        ArmOperation<ApiManagementSubscriptionResource> operation;
+        try
+        {
+            operation = await collection.CreateOrUpdateAsync(WaitUntil.Completed, subscriptionId, content, cancellationToken: ct);
+        }
+        catch (RequestFailedException ex) when (IsSubscriptionsLimitError(ex))
+        {
+            throw new ApimSubscriptionLimitException(ex.Message, ex);
+        }
         var secrets = await operation.Value.GetSecretsAsync(cancellationToken: ct);
 
         return (operation.Value.Data.Name, new SubscriptionKeys
@@ -197,6 +213,14 @@ public sealed class ApimManagementService
             SecondaryKey = secrets.Value.SecondaryKey
         });
     }
+
+    /// <summary>
+    /// True when an APIM <see cref="RequestFailedException"/> is the product "Subscriptions limit"
+    /// validation error (HTTP 400, e.g. "Subscriptions limit reached for same user").
+    /// </summary>
+    private static bool IsSubscriptionsLimitError(RequestFailedException ex) =>
+        ex.Status == 400 &&
+        (ex.Message?.Contains("limit", StringComparison.OrdinalIgnoreCase) ?? false);
 
     /// <summary>Lists the APIM subscriptions owned by a given Dev Portal user.</summary>
     public async Task<List<UserSubscriptionView>> ListUserSubscriptionsAsync(string userId, CancellationToken ct = default)

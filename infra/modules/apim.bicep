@@ -140,6 +140,78 @@ resource apiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-09-01-pre
   ]
 }
 
+// --- Seed custom groups, users, and memberships (APIM-native, Basic identity) ---
+
+var apimGroups = [
+  'Group1'
+  'Group2'
+  'Group3'
+]
+
+resource groups 'Microsoft.ApiManagement/service/groups@2023-09-01-preview' = [for g in apimGroups: {
+  parent: apim
+  name: toLower(g)
+  properties: {
+    displayName: g
+    type: 'custom'
+  }
+}]
+
+var apimUsers = [
+  {
+    id: 'testuser1'
+    email: 'testuser1@apim.com'
+    firstName: 'Test'
+    lastName: 'User1'
+  }
+  {
+    id: 'testuser2'
+    email: 'testuser2@apim.com'
+    firstName: 'Test'
+    lastName: 'User2'
+  }
+]
+
+resource users 'Microsoft.ApiManagement/service/users@2023-09-01-preview' = [for u in apimUsers: {
+  parent: apim
+  name: u.id
+  properties: {
+    email: u.email
+    firstName: u.firstName
+    lastName: u.lastName
+    password: 'verydifficultpassword123'
+    state: 'active'
+    confirmation: 'signup'
+  }
+}]
+
+var memberships = [
+  {
+    group: 'group1'
+    user: 'testuser1'
+  }
+  {
+    group: 'group2'
+    user: 'testuser1'
+  }
+  {
+    group: 'group2'
+    user: 'testuser2'
+  }
+  {
+    group: 'group3'
+    user: 'testuser2'
+  }
+]
+
+resource groupMemberships 'Microsoft.ApiManagement/service/groups/users@2023-09-01-preview' = [for m in memberships: {
+  name: '${apimName}/${m.group}/${m.user}'
+  dependsOn: [
+    groups
+    users
+  ]
+}]
+
 output apimName string = apim.name
 output apimId string = apim.id
 output apimPrincipalId string = apim.identity.principalId
