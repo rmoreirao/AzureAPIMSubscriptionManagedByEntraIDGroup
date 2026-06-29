@@ -8,7 +8,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Graph;
 using GroupSubscriptions.Functions.Models;
 using GroupSubscriptions.Functions.Security;
 using GroupSubscriptions.Functions.Services;
@@ -65,14 +64,10 @@ var host = new HostBuilder()
             Serializer = new CosmosSystemTextJsonSerializer(System.Text.Json.JsonSerializerOptions.Default)
         }));
 
-        // Keyless Microsoft Graph client (managed identity with Graph app permissions).
-        services.AddSingleton(sp => new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" }));
-
         // Keyless ARM client to manage APIM subscriptions.
         services.AddSingleton(sp => new ArmClient(credential));
 
         services.AddSingleton<CosmosRepository>();
-        services.AddSingleton<GraphService>();
         services.AddSingleton<ApimGroupService>();
         services.AddSingleton<ApimManagementService>();
         services.AddSingleton<SubscriptionLimitService>();

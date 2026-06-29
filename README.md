@@ -59,27 +59,12 @@ backend:
 
 | Method | Route | Purpose |
 |--------|-------|---------|
-| GET | `/api/users/{userId}/groups` | List the user's Entra ID groups (Graph). Only the authenticated user may read their own groups. |
 | POST | `/api/user-subscriptions` | Create an APIM subscription owned by the authenticated caller (personal/user subscription). |
 | GET | `/api/user-subscriptions` | List the APIM subscriptions owned by the authenticated caller. |
-| POST | `/api/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target group. |
-| GET | `/api/group-subscriptions` | List subscriptions for the caller's groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/group-subscriptions/{entraIdGroup}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the group that owns the subscription. |
 
-> **Note:** `GET /api/group-subscriptions` no longer accepts a `?groups=` query parameter — the
-> caller's groups are resolved from the authenticated user, so a user can only ever see subscriptions
-> for groups they belong to.
+### Group endpoints (APIM groups)
 
-### APIM-group endpoints (Dev Portal not yet connected to Entra ID)
-
-A parallel set of endpoints resolves group membership from the **APIM Groups** instead of Entra ID.
-Only **custom** APIM groups (e.g. `Team1`/`Team2`/`Team3`) are eligible — the built-in `system`
-groups (`Administrators`/`Developers`/`Guests`) and `external` groups are filtered out, both when
-listing a user's groups and when validating membership on subscription creation (a request targeting a
-system group is rejected with **403**). Use these when the Developer Portal is **not** federated with
-Entra ID. They are backed by new `…Apim` Functions and an `ApimGroupService` that calls the APIM
-control plane via the Function's managed identity (which already holds *API Management Service
-Contributor*) — no Graph permissions required. The existing Entra-ID endpoints above are unchanged.
+Group membership is resolved from the **APIM Groups**. Only **custom** APIM groups
 
 | Method | Route | Purpose |
 |--------|-------|---------|
@@ -88,8 +73,8 @@ Contributor*) — no Graph permissions required. The existing Entra-ID endpoints
 | GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's custom APIM groups (resolved server-side), enriched with current APIM keys. |
 | POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the custom APIM group that owns the subscription. |
 
-> Both endpoint families share the same Cosmos container; the group identifier (an APIM group id like
-> `Group1`, or an Entra group id) is stored opaquely in the record's group field. The custom widgets
+> The same Cosmos container backs these endpoints; the group identifier (an APIM group id like
+> `Group1`) is stored opaquely in the record's group field. The custom widgets
 > point at the `/api/apim/...` endpoints.
 
 
@@ -140,29 +125,6 @@ Add these **repository variables** (Settings → Secrets and variables → Actio
 | `AZURE_SUBSCRIPTION_ID` | Target subscription ID |
 | `APIM_PUBLISHER_EMAIL` | Publisher email for APIM |
 | `AZURE_FUNCTIONAPP_NAME` | Deployed Function App name (from infra outputs) |
-
-### 2. Grant Microsoft Graph permissions to the Function identity
-
-After the first infra deploy, grant the Function App's **system-assigned managed identity** the Graph
-**application** permissions `GroupMember.Read.All` and `User.Read.All` (required by the `GetUserGroups`
-endpoint), then **admin-consent** them. This requires a directory admin and cannot be done in Bicep.
-
-Example (run as a tenant admin; `MI_OBJECT_ID` is the Function App identity's principal/object id):
-
-```bash
-MI_OBJECT_ID=$(az functionapp identity show -g <rg> -n <function-app> --query principalId -o tsv)
-GRAPH_SP_ID=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query id -o tsv)
-
-# App role ids: GroupMember.Read.All = 98830695-27a2-44f7-8c18-0c3ebc9698f6
-#               User.Read.All        = df021288-bdef-4463-88db-98f22de89214
-for ROLE in 98830695-27a2-44f7-8c18-0c3ebc9698f6 df021288-bdef-4463-88db-98f22de89214; do
-  az rest --method POST \
-    --url "https://graph.microsoft.com/v1.0/servicePrincipals/$MI_OBJECT_ID/appRoleAssignments" \
-    --body "{\"principalId\":\"$MI_OBJECT_ID\",\"resourceId\":\"$GRAPH_SP_ID\",\"appRoleId\":\"$ROLE\"}"
-done
-```
-
-After granting, restart the Function App so its managed-identity token picks up the new roles.
 
 ## Deploy
 

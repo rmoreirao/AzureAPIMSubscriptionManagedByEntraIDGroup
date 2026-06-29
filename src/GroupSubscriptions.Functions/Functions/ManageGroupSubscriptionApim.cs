@@ -71,7 +71,11 @@ public sealed class ManageGroupSubscriptionApim
             case "cancel":
                 _logger.LogInformation("Cancelling APIM subscription {SubscriptionId}", subscriptionId);
                 await _apim.CancelSubscriptionAsync(subscriptionId, ct);
-                await _repository.DeleteAsync(record.Id, entraIdGroup, ct);
+                // Keep the Cosmos record so the cancelled subscription still appears in the grid
+                // (state reflected as "Cancelled" from APIM), consistent with user subscriptions.
+                // Mark it cancelled so it no longer counts against the product subscription limit.
+                record.Status = "cancelled";
+                await _repository.UpsertAsync(record, ct);
                 return req.CreateResponse(HttpStatusCode.NoContent);
 
             default:

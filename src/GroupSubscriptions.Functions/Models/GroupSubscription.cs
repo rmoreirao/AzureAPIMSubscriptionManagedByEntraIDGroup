@@ -33,6 +33,10 @@ public sealed class GroupSubscription
 
     [JsonPropertyName("dateCreated")]
     public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Lifecycle status of the record: "active" or "cancelled". Cancelled records remain for display but no longer count against product limits.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "active";
 }
 
 public sealed class CreateGroupSubscriptionRequest

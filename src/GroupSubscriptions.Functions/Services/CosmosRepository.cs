@@ -73,7 +73,7 @@ public sealed class CosmosRepository
         }
 
         var query = new QueryDefinition(
-                "SELECT VALUE COUNT(1) FROM c WHERE c.entraIdGroup = @group AND c.productId = @productId")
+                "SELECT VALUE COUNT(1) FROM c WHERE c.entraIdGroup = @group AND c.productId = @productId AND (NOT IS_DEFINED(c.status) OR c.status != 'cancelled')")
             .WithParameter("@group", entraIdGroup)
             .WithParameter("@productId", productId);
 

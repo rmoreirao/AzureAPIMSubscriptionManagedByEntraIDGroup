@@ -221,11 +221,13 @@ async function main(): Promise<void> {
         try {
           const response = await apiFetch(`${actionBasePath(row)}/cancel`, {method: "POST"})
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          tr.remove()
+          // Keep the row visible but mark it cancelled (no usable keys), matching what the
+          // grid shows after a reload, rather than removing it from the table.
+          row.state = "Cancelled"
+          row.primaryKey = ""
+          row.secondaryKey = ""
+          tr.replaceWith(renderRow(row))
           setStatus(`Subscription "${row.subscriptionName}" cancelled.`, "success")
-          if (tableBody && tableBody.childElementCount === 0 && emptyState) {
-            emptyState.hidden = false
-          }
         } catch (error) {
           console.error(`${LOG} failed to cancel "${row.subscriptionName}" (${row.subscriptionId})`, error)
           setStatus(`Failed to cancel "${row.subscriptionName}".`, "error")

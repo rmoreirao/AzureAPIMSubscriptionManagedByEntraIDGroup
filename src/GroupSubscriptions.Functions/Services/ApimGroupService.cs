@@ -7,7 +7,7 @@ namespace GroupSubscriptions.Functions.Services;
 
 /// <summary>
 /// Resolves group membership from the <b>APIM Groups</b> (built-in + custom) that the Dev Portal
-/// uses, rather than from Entra ID. Mirrors <see cref="GraphService"/> but reads the APIM control
+/// uses, rather than from Entra ID. Reads the APIM control
 /// plane via the shared <see cref="ArmClient"/>. The Function managed identity already has
 /// <c>API Management Service Contributor</c>, so no extra RBAC/Graph permissions are required.
 /// </summary>

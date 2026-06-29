@@ -12,9 +12,7 @@ headers so the Functions can confirm the request comes from a valid Dev Portal u
 | **Subscriptions** | `cw-group-subscriptions` | Single table listing the caller's **user *and* group** subscriptions (Name, Type, Group, Product, State, Primary/Secondary Key, Date created) with a per-row "⋯" menu (*Show keys*, *Regenerate keys*, *Cancel subscription*). Inactive subscriptions show "The subscription is not active" instead of keys. | `GET /apim/group-subscriptions`, `GET /user-subscriptions`, `POST /apim/group-subscriptions/{group}/{subId}/{regenerate\|cancel}`, `POST /user-subscriptions/{subId}/{regenerate\|cancel}` |
 
 > The group-subscription widgets call the **APIM-group** endpoints (`/apim/...`), which resolve group
-> membership from the APIM Groups rather than Entra ID (the Dev Portal is not yet federated with Entra
-> ID). The equivalent Entra-ID endpoints (`/users/{userId}/groups`, `/group-subscriptions`) still exist
-> on the backend and are unchanged.
+> membership from the APIM Groups.
 
 > **`cw-custom-product-subscription`** merges the former navigation-only subscription-type widget and
 > the former standalone group-subscription create flow into a single widget that shows/hides its panels
