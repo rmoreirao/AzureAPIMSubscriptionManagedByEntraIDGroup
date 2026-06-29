@@ -416,7 +416,8 @@ public sealed class ApimManagementService
     public async Task CancelSubscriptionAsync(string subscriptionId, CancellationToken ct = default)
     {
         var subscription = await GetSubscriptionAsync(subscriptionId, ct);
-        await subscription.DeleteAsync(WaitUntil.Completed, ifMatch: ETag.All, cancellationToken: ct);
+        var patch = new ApiManagementSubscriptionPatch { State = SubscriptionState.Cancelled };
+        await subscription.UpdateAsync(ETag.All, patch, cancellationToken: ct);
     }
 
     private async Task<ApiManagementSubscriptionResource> GetSubscriptionAsync(string subscriptionId, CancellationToken ct)
