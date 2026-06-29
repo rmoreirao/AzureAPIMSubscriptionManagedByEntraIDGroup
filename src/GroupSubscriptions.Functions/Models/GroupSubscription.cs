@@ -82,6 +82,12 @@ public sealed class SubscriptionKeys
     public string? SecondaryKey { get; set; }
 }
 
+/// <summary>Request body for renaming a subscription.</summary>
+public sealed class RenameRequest
+{
+    public string Name { get; set; } = string.Empty;
+}
+
 /// <summary>The live state, scope/product and keys of an APIM subscription, used to enrich list views.</summary>
 public sealed class SubscriptionDetails
 {

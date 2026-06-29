@@ -45,6 +45,11 @@ type SubscriptionRow = {
 
 const MASK = "••••••••••••••••"
 
+// Fluent-style inline icons matching the OOB Dev Portal rename controls.
+const ICON_EDIT = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M14.6 2.6a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1l-8.4 8.4-3 .8.8-3 8.4-8.4ZM4 14v2h2l8.3-8.3-2-2L4 14Z"/></svg>`
+const ICON_SAVE = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 13.6 4 10.1l-1 1L7.5 16 17 6.5l-1-1z"/></svg>`
+const ICON_CANCEL = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.1 4.2 4.9 4 10 9.3 15.1 4l.8.2.2.8L10.7 10l5.4 5.1-.2.8-.8.2L10 10.7 4.9 16l-.8-.2-.2-.8L9.3 10 3.9 5z"/></svg>`
+
 function setText(id: string, text: string): void {
   const el = document.getElementById(id)
   if (el) el.innerText = text
@@ -137,9 +142,93 @@ async function main(): Promise<void> {
   function renderRow(row: SubscriptionRow): HTMLTableRowElement {
     const active = isActive(row.state)
 
+    // Name cell with an in-place rename: a pencil icon appears on hover; clicking it swaps the name
+    // for a textbox with Save/Cancel icons that PATCH the subscription's display name (mirrors OOB).
+    function makeNameCell(): HTMLTableCellElement {
+      const cell = el("td", {className: "name-cell"})
+
+      function renderDisplay(): void {
+        cell.innerHTML = ""
+        const text = el("span", {className: "name-text", textContent: row.subscriptionName})
+        const edit = el("button", {
+          type: "button",
+          className: "icon-btn edit-icon",
+          title: "Edit",
+          innerHTML: ICON_EDIT,
+        })
+        edit.setAttribute("aria-label", "Edit")
+        edit.addEventListener("click", e => {
+          e.stopPropagation()
+          renderEdit()
+        })
+        cell.append(text, edit)
+      }
+
+      function renderEdit(): void {
+        cell.innerHTML = ""
+        const input = el("input", {
+          className: "name-input",
+          type: "text",
+          value: row.subscriptionName,
+        }) as HTMLInputElement
+        const save = el("button", {type: "button", className: "icon-btn", title: "Save", innerHTML: ICON_SAVE})
+        save.setAttribute("aria-label", "Save")
+        const cancel = el("button", {type: "button", className: "icon-btn", title: "Cancel", innerHTML: ICON_CANCEL})
+        cancel.setAttribute("aria-label", "Cancel")
+
+        async function commit(): Promise<void> {
+          const newName = input.value.trim()
+          if (!newName || newName === row.subscriptionName) {
+            renderDisplay()
+            return
+          }
+          save.disabled = cancel.disabled = input.disabled = true
+          setStatus(`Renaming "${row.subscriptionName}"…`)
+          try {
+            const response = await apiFetch(`${actionBasePath(row)}/rename`, {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({name: newName}),
+            })
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            row.subscriptionName = newName
+            setStatus(`Subscription renamed to "${newName}".`, "success")
+          } catch (error) {
+            console.error(`${LOG} failed to rename "${row.subscriptionName}" (${row.subscriptionId})`, error)
+            setStatus(`Failed to rename "${row.subscriptionName}".`, "error")
+          }
+          renderDisplay()
+        }
+
+        save.addEventListener("click", e => {
+          e.stopPropagation()
+          void commit()
+        })
+        cancel.addEventListener("click", e => {
+          e.stopPropagation()
+          renderDisplay()
+        })
+        input.addEventListener("click", e => e.stopPropagation())
+        input.addEventListener("keydown", e => {
+          if (e.key === "Enter") void commit()
+          else if (e.key === "Escape") renderDisplay()
+        })
+        cell.append(input, save, cancel)
+        input.focus()
+        input.select()
+      }
+
+      renderDisplay()
+      return cell
+    }
+
     // Each key cell fetches its key on demand (never sent with the list), reveals it with a
     // Copy control, then re-masks once the value has been copied to avoid lingering exposure.
-    function makeKeyCell(keyAction: "primary-key" | "secondary-key"): {cell: HTMLTableCellElement; reveal: (value: string) => void; mask: () => void} {
+    function makeKeyCell(keyAction: "primary-key" | "secondary-key"): {
+      cell: HTMLTableCellElement
+      reveal: (value: string) => void
+      mask: () => void
+    } {
       const value = el("span", {className: "key-value", textContent: MASK})
       const toggle = el("button", {type: "button", className: "link-btn", textContent: "Show"})
       const cell = el("td", {}, [value, toggle])
@@ -154,7 +243,7 @@ async function main(): Promise<void> {
         toggle.textContent = "Copy"
       }
 
-      toggle.addEventListener("click", async (e) => {
+      toggle.addEventListener("click", async e => {
         e.stopPropagation()
         if (toggle.textContent === "Copy") {
           try {
@@ -175,7 +264,10 @@ async function main(): Promise<void> {
           if (!key) throw new Error("empty key")
           reveal(key)
         } catch (error) {
-          console.error(`${LOG} failed to fetch ${keyAction} for "${row.subscriptionName}" (${row.subscriptionId})`, error)
+          console.error(
+            `${LOG} failed to fetch ${keyAction} for "${row.subscriptionName}" (${row.subscriptionId})`,
+            error
+          )
           setStatus(`Failed to load the key for "${row.subscriptionName}".`, "error")
         } finally {
           toggle.disabled = false
@@ -190,20 +282,25 @@ async function main(): Promise<void> {
 
     const tr = el("tr")
     tr.append(
-      el("td", {textContent: row.subscriptionName}),
+      makeNameCell(),
       el("td", {textContent: row.type}),
       el("td", {textContent: row.group || "—"}),
       el("td", {textContent: row.product || "—"})
     )
 
-    const stateCell = el("td", {textContent: row.state || "—", className: active ? "state state--active" : "state state--inactive"})
+    const stateCell = el("td", {
+      textContent: row.state || "—",
+      className: active ? "state state--active" : "state state--inactive",
+    })
     tr.append(stateCell)
 
     if (active) {
       tr.append(primary.cell, secondary.cell)
     } else {
       // Inactive subscriptions have no usable keys — show a single explanatory message.
-      tr.append(el("td", {className: "inactive-note", colSpan: 2}, [el("em", {textContent: "The subscription is not active"})]))
+      tr.append(
+        el("td", {className: "inactive-note", colSpan: 2}, [el("em", {textContent: "The subscription is not active"})])
+      )
     }
 
     tr.append(el("td", {textContent: formatDate(row.dateCreated)}))
@@ -214,9 +311,13 @@ async function main(): Promise<void> {
       const menu = el("div", {className: "menu", hidden: true})
 
       // Regenerates a single key and reveals it (with copy/auto-hide via the matching cell).
-      function makeRegenItem(label: string, action: "regenerate-primary" | "regenerate-secondary", which: typeof primary | typeof secondary): HTMLButtonElement {
+      function makeRegenItem(
+        label: string,
+        action: "regenerate-primary" | "regenerate-secondary",
+        which: typeof primary | typeof secondary
+      ): HTMLButtonElement {
         const item = el("button", {type: "button", className: "menu-item", textContent: label})
-        item.addEventListener("click", async (e) => {
+        item.addEventListener("click", async e => {
           e.stopPropagation()
           closeMenu()
           item.disabled = true
@@ -227,7 +328,10 @@ async function main(): Promise<void> {
             const keys: {primaryKey?: string; secondaryKey?: string} = await response.json()
             const key = action === "regenerate-primary" ? keys.primaryKey : keys.secondaryKey
             if (key) which.reveal(key)
-            setStatus(`${label} regenerated for "${row.subscriptionName}". Copy it now — it will be hidden after copying.`, "success")
+            setStatus(
+              `${label} regenerated for "${row.subscriptionName}". Copy it now — it will be hidden after copying.`,
+              "success"
+            )
           } catch (error) {
             console.error(`${LOG} failed to ${action} for "${row.subscriptionName}" (${row.subscriptionId})`, error)
             setStatus(`Failed to regenerate the key for "${row.subscriptionName}".`, "error")
@@ -241,8 +345,12 @@ async function main(): Promise<void> {
       const regenPrimaryItem = makeRegenItem("Regenerate primary key", "regenerate-primary", primary)
       const regenSecondaryItem = makeRegenItem("Regenerate secondary key", "regenerate-secondary", secondary)
 
-      const cancelItem = el("button", {type: "button", className: "menu-item menu-item--danger", textContent: "Cancel subscription"})
-      cancelItem.addEventListener("click", async (e) => {
+      const cancelItem = el("button", {
+        type: "button",
+        className: "menu-item menu-item--danger",
+        textContent: "Cancel subscription",
+      })
+      cancelItem.addEventListener("click", async e => {
         e.stopPropagation()
         closeMenu()
         if (!window.confirm(`Cancel subscription "${row.subscriptionName}"? This cannot be undone.`)) return
@@ -267,7 +375,7 @@ async function main(): Promise<void> {
 
       const kebab = el("button", {type: "button", className: "kebab", textContent: "⋯"})
       kebab.setAttribute("aria-label", "Subscription actions")
-      kebab.addEventListener("click", (e) => {
+      kebab.addEventListener("click", e => {
         e.stopPropagation()
         const willOpen = menu.hidden
         closeMenu()
@@ -335,7 +443,10 @@ async function main(): Promise<void> {
 
   if (groupFailed || userFailed) {
     const failed = groupFailed ? "group" : "user"
-    setStatus(`Loaded subscriptions, but the ${failed} subscriptions could not be loaded. See the console for details.`, "error")
+    setStatus(
+      `Loaded subscriptions, but the ${failed} subscriptions could not be loaded. See the console for details.`,
+      "error"
+    )
   } else {
     setStatus("")
   }

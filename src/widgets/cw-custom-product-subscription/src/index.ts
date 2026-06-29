@@ -140,12 +140,12 @@ async function main(): Promise<void> {
   const scope = resolveProductScope(secrets.parentLocation?.href, values.scope)
   logInfo("Resolved subscription scope", {parentHref: secrets.parentLocation?.href, scope})
 
-
   // --- Create form: configurable labels ---
   setText("createHeading", values.createHeading)
   setText("typeLabel", values.typeLabel)
   setText("nameLabel", values.nameLabel)
   setText("groupFieldLabel", values.groupFieldLabel)
+  setText("groupDisclaimer", values.groupDisclaimer)
 
   const personalOption = document.getElementById("typePersonalOption")
   if (personalOption) personalOption.textContent = values.typePersonalLabel
@@ -177,7 +177,7 @@ async function main(): Promise<void> {
     setStatus("createStatus", "")
     if (isGroup && !groupsLoaded) {
       groupsLoaded = true
-      void loadGroups(apiFetch, secrets.userId ?? "")
+      void loadGroups(apiFetch, secrets.userId ?? "", values.groupPlaceholder)
     }
   })
 
@@ -288,12 +288,24 @@ async function refreshSubscriptions(apiFetch: ApiFetch): Promise<void> {
 // ---------------------------------------------------------------------------
 // Group loading: populate the APIM group dropdown for the current user.
 // ---------------------------------------------------------------------------
-async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
+async function loadGroups(apiFetch: ApiFetch, userId: string, placeholder: string): Promise<void> {
   const groupSelect = document.getElementById("subGroup") as HTMLSelectElement | null
 
   if (!userId) {
     setStatus("createStatus", "Unable to determine the current user.", "error")
     return
+  }
+
+  // Always keep a non-selectable placeholder as the default so a real group must be chosen
+  // deliberately — preventing accidental team subscriptions against the wrong group.
+  function addPlaceholder(): void {
+    if (!groupSelect) return
+    const option = document.createElement("option")
+    option.value = ""
+    option.disabled = true
+    option.selected = true
+    option.textContent = placeholder
+    groupSelect.appendChild(option)
   }
 
   try {
@@ -307,6 +319,7 @@ async function loadGroups(apiFetch: ApiFetch, userId: string): Promise<void> {
     const groups: EntraGroup[] = await response.json()
     if (groupSelect) {
       groupSelect.innerHTML = ""
+      addPlaceholder()
       if (groups.length === 0) {
         setStatus("createStatus", "You are not a member of any APIM group.", "error")
       }

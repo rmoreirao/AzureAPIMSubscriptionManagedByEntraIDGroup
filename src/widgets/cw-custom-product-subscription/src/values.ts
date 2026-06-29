@@ -6,6 +6,8 @@ export type Values = {
   nameLabel: string
   namePlaceholder: string
   groupFieldLabel: string
+  groupPlaceholder: string
+  groupDisclaimer: string
   personalButtonLabel: string
   groupButtonLabel: string
   functionBaseUrl: string
@@ -15,11 +17,13 @@ export type Values = {
 export const valuesDefault: Readonly<Values> = Object.freeze({
   createHeading: "Create a new subscription",
   typeLabel: "Type",
-  typePersonalLabel: "👤 Personal",
+  typePersonalLabel: "👤 User",
   typeGroupLabel: "👥 Group",
   nameLabel: "Subscription name",
   namePlaceholder: "Your new product subscription name",
   groupFieldLabel: "APIM group",
+  groupPlaceholder: "Select APIM Group",
+  groupDisclaimer: "All members of this group will be able to manage this subscription.",
   personalButtonLabel: "Subscribe",
   groupButtonLabel: "Create",
   functionBaseUrl: "https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api",

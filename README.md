@@ -71,7 +71,7 @@ Group membership is resolved from the **APIM Groups**. Only **custom** APIM grou
 | GET | `/api/apim/users/{userId}/groups` | List the user's **custom APIM** groups. Only the authenticated user may read their own groups. |
 | POST | `/api/apim/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target **custom** APIM group. |
 | GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's custom APIM groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel}` | Regenerate keys or cancel. Caller must be a member of the custom APIM group that owns the subscription. |
+| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel\|rename}` | Regenerate keys, cancel, or rename. Caller must be a member of the custom APIM group that owns the subscription. |
 
 > The same Cosmos container backs these endpoints; the group identifier (an APIM group id like
 > `Group1`) is stored opaquely in the record's group field. The custom widgets

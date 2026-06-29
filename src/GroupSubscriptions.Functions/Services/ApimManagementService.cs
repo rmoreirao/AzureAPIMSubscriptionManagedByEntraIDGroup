@@ -424,6 +424,14 @@ public sealed class ApimManagementService
         await subscription.UpdateAsync(ETag.All, patch, cancellationToken: ct);
     }
 
+    /// <summary>Renames a subscription by updating its APIM <c>DisplayName</c>.</summary>
+    public async Task RenameSubscriptionAsync(string subscriptionId, string displayName, CancellationToken ct = default)
+    {
+        var subscription = await GetSubscriptionAsync(subscriptionId, ct);
+        var patch = new ApiManagementSubscriptionPatch { DisplayName = displayName };
+        await subscription.UpdateAsync(ETag.All, patch, cancellationToken: ct);
+    }
+
     private async Task<ApiManagementSubscriptionResource> GetSubscriptionAsync(string subscriptionId, CancellationToken ct)
     {
         var id = ApiManagementSubscriptionResource.CreateResourceIdentifier(

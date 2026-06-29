@@ -54,6 +54,53 @@ body {
   margin-right: 8px;
 }
 
+.name-cell {
+  white-space: nowrap;
+}
+
+.name-text {
+  margin-right: 6px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #605e5c;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.icon-btn:hover {
+  background: #f3f2f1;
+  color: #323130;
+}
+
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-icon {
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.name-cell:hover .edit-icon {
+  opacity: 1;
+}
+
+.name-input {
+  font-size: 15px;
+  padding: 4px 6px;
+  border: 1px solid #0078d4;
+  border-radius: 4px;
+  margin-right: 4px;
+  min-width: 160px;
+}
+
 .actions {
   display: flex;
   gap: 8px;

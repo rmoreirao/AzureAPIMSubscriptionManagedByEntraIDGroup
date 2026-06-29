@@ -1,81 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Custom Product Subscription – editor</title>
-  <link rel="stylesheet" href="./styles/editor.scss" />
-  <script type="module">
-    import initialize, {onChange} from "./editor"
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Product Subscription – editor</title>
+    <link rel="stylesheet" href="./styles/editor.scss" />
+    <script type="module">
+      import initialize, {onChange} from "./editor"
 
-    initialize()
+      initialize()
 
-    window.onChange = onChange
-  </script>
-</head>
-<body>
-<fieldset class="form">
-  <div class="form-group">
-    <label class="form-label" for="createHeading">Create section heading</label>
-    <input id="createHeading" class="form-control" type="text" oninput="onChange({createHeading: this.value})" />
-  </div>
+      window.onChange = onChange
+    </script>
+  </head>
+  <body>
+    <fieldset class="form">
+      <div class="form-group">
+        <label class="form-label" for="createHeading">Create section heading</label>
+        <input id="createHeading" class="form-control" type="text" oninput="onChange({createHeading: this.value})" />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="typeLabel">Type field – label</label>
-    <input id="typeLabel" class="form-control" type="text" oninput="onChange({typeLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="typeLabel">Type field – label</label>
+        <input id="typeLabel" class="form-control" type="text" oninput="onChange({typeLabel: this.value})" />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="typePersonalLabel">Type option – Personal</label>
-    <input id="typePersonalLabel" class="form-control" type="text"
-           oninput="onChange({typePersonalLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="typePersonalLabel">Type option – Personal</label>
+        <input
+          id="typePersonalLabel"
+          class="form-control"
+          type="text"
+          oninput="onChange({typePersonalLabel: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="typeGroupLabel">Type option – Group</label>
-    <input id="typeGroupLabel" class="form-control" type="text"
-           oninput="onChange({typeGroupLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="typeGroupLabel">Type option – Group</label>
+        <input id="typeGroupLabel" class="form-control" type="text" oninput="onChange({typeGroupLabel: this.value})" />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="nameLabel">Subscription name – label</label>
-    <input id="nameLabel" class="form-control" type="text" oninput="onChange({nameLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="nameLabel">Subscription name – label</label>
+        <input id="nameLabel" class="form-control" type="text" oninput="onChange({nameLabel: this.value})" />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="namePlaceholder">Subscription name – placeholder</label>
-    <input id="namePlaceholder" class="form-control" type="text"
-           oninput="onChange({namePlaceholder: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="namePlaceholder">Subscription name – placeholder</label>
+        <input
+          id="namePlaceholder"
+          class="form-control"
+          type="text"
+          oninput="onChange({namePlaceholder: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="groupFieldLabel">APIM group – label</label>
-    <input id="groupFieldLabel" class="form-control" type="text"
-           oninput="onChange({groupFieldLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="groupFieldLabel">APIM group – label</label>
+        <input
+          id="groupFieldLabel"
+          class="form-control"
+          type="text"
+          oninput="onChange({groupFieldLabel: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="personalButtonLabel">Button label – Personal</label>
-    <input id="personalButtonLabel" class="form-control" type="text"
-           oninput="onChange({personalButtonLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="groupPlaceholder">APIM group – placeholder</label>
+        <input
+          id="groupPlaceholder"
+          class="form-control"
+          type="text"
+          oninput="onChange({groupPlaceholder: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="groupButtonLabel">Button label – Group</label>
-    <input id="groupButtonLabel" class="form-control" type="text"
-           oninput="onChange({groupButtonLabel: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="groupDisclaimer">APIM group – disclaimer</label>
+        <input
+          id="groupDisclaimer"
+          class="form-control"
+          type="text"
+          oninput="onChange({groupDisclaimer: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="functionBaseUrl">Function base URL</label>
-    <input id="functionBaseUrl" class="form-control" type="text"
-           oninput="onChange({functionBaseUrl: this.value})" />
-  </div>
+      <div class="form-group">
+        <label class="form-label" for="personalButtonLabel">Button label – Personal</label>
+        <input
+          id="personalButtonLabel"
+          class="form-control"
+          type="text"
+          oninput="onChange({personalButtonLabel: this.value})"
+        />
+      </div>
 
-  <div class="form-group">
-    <label class="form-label" for="scope">Fallback APIM scope (used only off a product page; e.g. /apis or /products/{id})</label>
-    <input id="scope" class="form-control" type="text" oninput="onChange({scope: this.value})" />
-  </div>
-</fieldset>
-</body>
+      <div class="form-group">
+        <label class="form-label" for="groupButtonLabel">Button label – Group</label>
+        <input
+          id="groupButtonLabel"
+          class="form-control"
+          type="text"
+          oninput="onChange({groupButtonLabel: this.value})"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="functionBaseUrl">Function base URL</label>
+        <input
+          id="functionBaseUrl"
+          class="form-control"
+          type="text"
+          oninput="onChange({functionBaseUrl: this.value})"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="scope"
+          >Fallback APIM scope (used only off a product page; e.g. /apis or /products/{id})</label
+        >
+        <input id="scope" class="form-control" type="text" oninput="onChange({scope: this.value})" />
+      </div>
+    </fieldset>
+  </body>
 </html>

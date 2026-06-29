@@ -105,9 +105,26 @@ public sealed class ManageGroupSubscriptionApim
                 await _repository.UpsertAsync(record, ct);
                 return req.CreateResponse(HttpStatusCode.NoContent);
 
+            case "rename":
+                var renameBody = await req.ReadFromJsonAsync<RenameRequest>(ct);
+                var newName = renameBody?.Name?.Trim();
+                if (string.IsNullOrWhiteSpace(newName))
+                {
+                    var badName = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badName.WriteStringAsync("A non-empty 'name' is required.", ct);
+                    return badName;
+                }
+                _logger.LogInformation("Renaming APIM subscription {SubscriptionId}", subscriptionId);
+                await _apim.RenameSubscriptionAsync(subscriptionId, newName, ct);
+                record.SubscriptionName = newName;
+                await _repository.UpsertAsync(record, ct);
+                var renameOk = req.CreateResponse(HttpStatusCode.OK);
+                await renameOk.WriteAsJsonAsync(new { name = newName }, ct);
+                return renameOk;
+
             default:
                 var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-                await bad.WriteStringAsync("action must be 'primary-key', 'secondary-key', 'regenerate', 'regenerate-primary', 'regenerate-secondary' or 'cancel'.", ct);
+                await bad.WriteStringAsync("action must be 'primary-key', 'secondary-key', 'regenerate', 'regenerate-primary', 'regenerate-secondary', 'rename' or 'cancel'.", ct);
                 return bad;
         }
     }
