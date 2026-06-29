@@ -282,6 +282,25 @@ public sealed class ApimManagementService
             SecondaryKey = secrets.Value.SecondaryKey
         };
     }
+
+    /// <summary>Regenerates only the primary key and returns the new value.</summary>
+    public async Task<string?> RegeneratePrimaryKeyAsync(string subscriptionId, CancellationToken ct = default)
+    {
+        var subscription = await GetSubscriptionAsync(subscriptionId, ct);
+        await subscription.RegeneratePrimaryKeyAsync(ct);
+        var secrets = await subscription.GetSecretsAsync(cancellationToken: ct);
+        return secrets.Value.PrimaryKey;
+    }
+
+    /// <summary>Regenerates only the secondary key and returns the new value.</summary>
+    public async Task<string?> RegenerateSecondaryKeyAsync(string subscriptionId, CancellationToken ct = default)
+    {
+        var subscription = await GetSubscriptionAsync(subscriptionId, ct);
+        await subscription.RegenerateSecondaryKeyAsync(ct);
+        var secrets = await subscription.GetSecretsAsync(cancellationToken: ct);
+        return secrets.Value.SecondaryKey;
+    }
+
     public async Task<SubscriptionKeys> GetKeysAsync(string subscriptionId, CancellationToken ct = default)
     {
         try

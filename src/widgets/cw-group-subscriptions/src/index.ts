@@ -213,27 +213,33 @@ async function main(): Promise<void> {
     if (active) {
       const menu = el("div", {className: "menu", hidden: true})
 
-      const regenItem = el("button", {type: "button", className: "menu-item", textContent: "Regenerate keys"})
-      regenItem.addEventListener("click", async (e) => {
-        e.stopPropagation()
-        closeMenu()
-        regenItem.disabled = true
-        setStatus(`Regenerating keys for "${row.subscriptionName}"…`)
-        try {
-          const response = await apiFetch(`${actionBasePath(row)}/regenerate`, {method: "POST"})
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          const keys: {primaryKey?: string; secondaryKey?: string} = await response.json()
-          // Reveal the freshly generated keys so the user can copy them; copying re-masks each.
-          if (keys.primaryKey) primary.reveal(keys.primaryKey)
-          if (keys.secondaryKey) secondary.reveal(keys.secondaryKey)
-          setStatus(`Keys regenerated for "${row.subscriptionName}". Copy them now — they will be hidden after copying.`, "success")
-        } catch (error) {
-          console.error(`${LOG} failed to regenerate keys for "${row.subscriptionName}" (${row.subscriptionId})`, error)
-          setStatus(`Failed to regenerate keys for "${row.subscriptionName}".`, "error")
-        } finally {
-          regenItem.disabled = false
-        }
-      })
+      // Regenerates a single key and reveals it (with copy/auto-hide via the matching cell).
+      function makeRegenItem(label: string, action: "regenerate-primary" | "regenerate-secondary", which: typeof primary | typeof secondary): HTMLButtonElement {
+        const item = el("button", {type: "button", className: "menu-item", textContent: label})
+        item.addEventListener("click", async (e) => {
+          e.stopPropagation()
+          closeMenu()
+          item.disabled = true
+          setStatus(`Regenerating ${label.toLowerCase()} for "${row.subscriptionName}"…`)
+          try {
+            const response = await apiFetch(`${actionBasePath(row)}/${action}`, {method: "POST"})
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            const keys: {primaryKey?: string; secondaryKey?: string} = await response.json()
+            const key = action === "regenerate-primary" ? keys.primaryKey : keys.secondaryKey
+            if (key) which.reveal(key)
+            setStatus(`${label} regenerated for "${row.subscriptionName}". Copy it now — it will be hidden after copying.`, "success")
+          } catch (error) {
+            console.error(`${LOG} failed to ${action} for "${row.subscriptionName}" (${row.subscriptionId})`, error)
+            setStatus(`Failed to regenerate the key for "${row.subscriptionName}".`, "error")
+          } finally {
+            item.disabled = false
+          }
+        })
+        return item
+      }
+
+      const regenPrimaryItem = makeRegenItem("Regenerate primary key", "regenerate-primary", primary)
+      const regenSecondaryItem = makeRegenItem("Regenerate secondary key", "regenerate-secondary", secondary)
 
       const cancelItem = el("button", {type: "button", className: "menu-item menu-item--danger", textContent: "Cancel subscription"})
       cancelItem.addEventListener("click", async (e) => {
@@ -257,7 +263,7 @@ async function main(): Promise<void> {
         }
       })
 
-      menu.append(regenItem, cancelItem)
+      menu.append(regenPrimaryItem, regenSecondaryItem, cancelItem)
 
       const kebab = el("button", {type: "button", className: "kebab", textContent: "⋯"})
       kebab.setAttribute("aria-label", "Subscription actions")

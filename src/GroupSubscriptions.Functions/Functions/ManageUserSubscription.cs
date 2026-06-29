@@ -68,6 +68,20 @@ public sealed class ManageUserSubscription
                 await ok.WriteAsJsonAsync(keys, ct);
                 return ok;
 
+            case "regenerate-primary":
+                _logger.LogInformation("Regenerating primary key for user APIM subscription {SubscriptionId}", subscriptionId);
+                var newPrimary = await _apim.RegeneratePrimaryKeyAsync(subscriptionId, ct);
+                var primaryRegenOk = req.CreateResponse(HttpStatusCode.OK);
+                await primaryRegenOk.WriteAsJsonAsync(new SubscriptionKeys { PrimaryKey = newPrimary }, ct);
+                return primaryRegenOk;
+
+            case "regenerate-secondary":
+                _logger.LogInformation("Regenerating secondary key for user APIM subscription {SubscriptionId}", subscriptionId);
+                var newSecondary = await _apim.RegenerateSecondaryKeyAsync(subscriptionId, ct);
+                var secondaryRegenOk = req.CreateResponse(HttpStatusCode.OK);
+                await secondaryRegenOk.WriteAsJsonAsync(new SubscriptionKeys { SecondaryKey = newSecondary }, ct);
+                return secondaryRegenOk;
+
             case "cancel":
                 _logger.LogInformation("Cancelling user APIM subscription {SubscriptionId}", subscriptionId);
                 await _apim.CancelSubscriptionAsync(subscriptionId, ct);
@@ -75,7 +89,7 @@ public sealed class ManageUserSubscription
 
             default:
                 var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-                await bad.WriteStringAsync("action must be 'primary-key', 'secondary-key', 'regenerate' or 'cancel'.", ct);
+                await bad.WriteStringAsync("action must be 'primary-key', 'secondary-key', 'regenerate', 'regenerate-primary', 'regenerate-secondary' or 'cancel'.", ct);
                 return bad;
         }
     }
