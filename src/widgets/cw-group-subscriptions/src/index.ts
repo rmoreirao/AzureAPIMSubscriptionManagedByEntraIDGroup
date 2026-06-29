@@ -41,8 +41,6 @@ type SubscriptionRow = {
   product: string
   state: string
   dateCreated: string
-  primaryKey: string
-  secondaryKey: string
 }
 
 const MASK = "••••••••••••••••"
@@ -85,8 +83,6 @@ function normalizeGroup(item: GroupSubscriptionView): SubscriptionRow {
     product: item.product || "",
     state: item.state || "",
     dateCreated: item.dateCreated || "",
-    primaryKey: item.primaryKey || "",
-    secondaryKey: item.secondaryKey || "",
   }
 }
 
@@ -100,8 +96,6 @@ function normalizeUser(item: UserSubscriptionView): SubscriptionRow {
     product: item.product || item.scope || "",
     state: item.state || "",
     dateCreated: item.dateCreated || "",
-    primaryKey: item.primaryKey || "",
-    secondaryKey: item.secondaryKey || "",
   }
 }
 
@@ -143,16 +137,56 @@ async function main(): Promise<void> {
   function renderRow(row: SubscriptionRow): HTMLTableRowElement {
     const active = isActive(row.state)
 
-    // Key cells (reveal state is controlled by the row's "Show keys" menu action).
-    const primaryValue = el("span", {className: "key-value", textContent: row.primaryKey ? MASK : "—"})
-    const secondaryValue = el("span", {className: "key-value", textContent: row.secondaryKey ? MASK : "—"})
-    let revealed = false
+    // Each key cell fetches its key on demand (never sent with the list), reveals it with a
+    // Copy control, then re-masks once the value has been copied to avoid lingering exposure.
+    function makeKeyCell(keyAction: "primary-key" | "secondary-key"): {cell: HTMLTableCellElement; reveal: (value: string) => void; mask: () => void} {
+      const value = el("span", {className: "key-value", textContent: MASK})
+      const toggle = el("button", {type: "button", className: "link-btn", textContent: "Show"})
+      const cell = el("td", {}, [value, toggle])
 
-    function setRevealed(next: boolean): void {
-      revealed = next
-      primaryValue.textContent = row.primaryKey ? (revealed ? row.primaryKey : MASK) : "—"
-      secondaryValue.textContent = row.secondaryKey ? (revealed ? row.secondaryKey : MASK) : "—"
+      function mask(): void {
+        value.textContent = MASK
+        toggle.textContent = "Show"
+      }
+
+      function reveal(key: string): void {
+        value.textContent = key
+        toggle.textContent = "Copy"
+      }
+
+      toggle.addEventListener("click", async (e) => {
+        e.stopPropagation()
+        if (toggle.textContent === "Copy") {
+          try {
+            await navigator.clipboard.writeText(value.textContent || "")
+            setStatus("Key copied to clipboard.", "success")
+          } catch {
+            setStatus("Could not copy the key to the clipboard.", "error")
+          }
+          mask()
+          return
+        }
+        toggle.disabled = true
+        try {
+          const response = await apiFetch(`${actionBasePath(row)}/${keyAction}`)
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const keys: {primaryKey?: string; secondaryKey?: string} = await response.json()
+          const key = keyAction === "primary-key" ? keys.primaryKey : keys.secondaryKey
+          if (!key) throw new Error("empty key")
+          reveal(key)
+        } catch (error) {
+          console.error(`${LOG} failed to fetch ${keyAction} for "${row.subscriptionName}" (${row.subscriptionId})`, error)
+          setStatus(`Failed to load the key for "${row.subscriptionName}".`, "error")
+        } finally {
+          toggle.disabled = false
+        }
+      })
+
+      return {cell, reveal, mask}
     }
+
+    const primary = makeKeyCell("primary-key")
+    const secondary = makeKeyCell("secondary-key")
 
     const tr = el("tr")
     tr.append(
@@ -166,7 +200,7 @@ async function main(): Promise<void> {
     tr.append(stateCell)
 
     if (active) {
-      tr.append(el("td", {}, [primaryValue]), el("td", {}, [secondaryValue]))
+      tr.append(primary.cell, secondary.cell)
     } else {
       // Inactive subscriptions have no usable keys — show a single explanatory message.
       tr.append(el("td", {className: "inactive-note", colSpan: 2}, [el("em", {textContent: "The subscription is not active"})]))
@@ -179,16 +213,6 @@ async function main(): Promise<void> {
     if (active) {
       const menu = el("div", {className: "menu", hidden: true})
 
-      const showItem = el("button", {type: "button", className: "menu-item", textContent: "Show keys"})
-      const hasKeys = Boolean(row.primaryKey || row.secondaryKey)
-      showItem.disabled = !hasKeys
-      showItem.addEventListener("click", (e) => {
-        e.stopPropagation()
-        setRevealed(!revealed)
-        showItem.textContent = revealed ? "Hide keys" : "Show keys"
-        closeMenu()
-      })
-
       const regenItem = el("button", {type: "button", className: "menu-item", textContent: "Regenerate keys"})
       regenItem.addEventListener("click", async (e) => {
         e.stopPropagation()
@@ -199,10 +223,10 @@ async function main(): Promise<void> {
           const response = await apiFetch(`${actionBasePath(row)}/regenerate`, {method: "POST"})
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
           const keys: {primaryKey?: string; secondaryKey?: string} = await response.json()
-          row.primaryKey = keys.primaryKey || ""
-          row.secondaryKey = keys.secondaryKey || ""
-          setRevealed(revealed)
-          setStatus(`Keys regenerated for "${row.subscriptionName}".`, "success")
+          // Reveal the freshly generated keys so the user can copy them; copying re-masks each.
+          if (keys.primaryKey) primary.reveal(keys.primaryKey)
+          if (keys.secondaryKey) secondary.reveal(keys.secondaryKey)
+          setStatus(`Keys regenerated for "${row.subscriptionName}". Copy them now — they will be hidden after copying.`, "success")
         } catch (error) {
           console.error(`${LOG} failed to regenerate keys for "${row.subscriptionName}" (${row.subscriptionId})`, error)
           setStatus(`Failed to regenerate keys for "${row.subscriptionName}".`, "error")
@@ -224,8 +248,6 @@ async function main(): Promise<void> {
           // Keep the row visible but mark it cancelled (no usable keys), matching what the
           // grid shows after a reload, rather than removing it from the table.
           row.state = "Cancelled"
-          row.primaryKey = ""
-          row.secondaryKey = ""
           tr.replaceWith(renderRow(row))
           setStatus(`Subscription "${row.subscriptionName}" cancelled.`, "success")
         } catch (error) {
@@ -235,7 +257,7 @@ async function main(): Promise<void> {
         }
       })
 
-      menu.append(showItem, regenItem, cancelItem)
+      menu.append(regenItem, cancelItem)
 
       const kebab = el("button", {type: "button", className: "kebab", textContent: "⋯"})
       kebab.setAttribute("aria-label", "Subscription actions")

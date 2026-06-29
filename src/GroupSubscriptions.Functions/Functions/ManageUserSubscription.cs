@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using GroupSubscriptions.Functions.Models;
 using GroupSubscriptions.Functions.Security;
 using GroupSubscriptions.Functions.Services;
 
@@ -27,7 +28,7 @@ public sealed class ManageUserSubscription
 
     [Function("ManageUserSubscription")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "user-subscriptions/{subscriptionId}/{action}")] HttpRequestData req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "user-subscriptions/{subscriptionId}/{action}")] HttpRequestData req,
         string subscriptionId,
         string action,
         CancellationToken ct)
@@ -48,6 +49,18 @@ public sealed class ManageUserSubscription
 
         switch (action.ToLowerInvariant())
         {
+            case "primary-key":
+                var primary = await _apim.GetPrimaryKeyAsync(subscriptionId, ct);
+                var primaryOk = req.CreateResponse(HttpStatusCode.OK);
+                await primaryOk.WriteAsJsonAsync(new SubscriptionKeys { PrimaryKey = primary }, ct);
+                return primaryOk;
+
+            case "secondary-key":
+                var secondary = await _apim.GetSecondaryKeyAsync(subscriptionId, ct);
+                var secondaryOk = req.CreateResponse(HttpStatusCode.OK);
+                await secondaryOk.WriteAsJsonAsync(new SubscriptionKeys { SecondaryKey = secondary }, ct);
+                return secondaryOk;
+
             case "regenerate":
                 _logger.LogInformation("Regenerating keys for user APIM subscription {SubscriptionId}", subscriptionId);
                 var keys = await _apim.RegenerateKeysAsync(subscriptionId, ct);
@@ -62,7 +75,7 @@ public sealed class ManageUserSubscription
 
             default:
                 var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-                await bad.WriteStringAsync("action must be 'regenerate' or 'cancel'.", ct);
+                await bad.WriteStringAsync("action must be 'primary-key', 'secondary-key', 'regenerate' or 'cancel'.", ct);
                 return bad;
         }
     }

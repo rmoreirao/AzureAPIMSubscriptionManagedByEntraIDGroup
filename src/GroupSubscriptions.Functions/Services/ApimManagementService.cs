@@ -238,7 +238,6 @@ public sealed class ApimManagementService
             }
 
             var scope = data.Scope ?? string.Empty;
-            var keys = await TryGetSecretsAsync(subscription, ct);
 
             views.Add(new UserSubscriptionView
             {
@@ -247,9 +246,7 @@ public sealed class ApimManagementService
                 State = data.State?.ToString() ?? string.Empty,
                 Scope = scope,
                 Product = await ResolveProductNameAsync(scope, ct),
-                DateCreated = data.CreatedOn,
-                PrimaryKey = keys.PrimaryKey,
-                SecondaryKey = keys.SecondaryKey
+                DateCreated = data.CreatedOn
             });
         }
 
@@ -303,6 +300,14 @@ public sealed class ApimManagementService
         }
     }
 
+    /// <summary>Returns just the primary key for a subscription, fetched on demand. Null if unavailable.</summary>
+    public async Task<string?> GetPrimaryKeyAsync(string subscriptionId, CancellationToken ct = default) =>
+        (await GetKeysAsync(subscriptionId, ct)).PrimaryKey;
+
+    /// <summary>Returns just the secondary key for a subscription, fetched on demand. Null if unavailable.</summary>
+    public async Task<string?> GetSecondaryKeyAsync(string subscriptionId, CancellationToken ct = default) =>
+        (await GetKeysAsync(subscriptionId, ct)).SecondaryKey;
+
     /// <summary>
     /// Fetches the live state, scope (resolved to a friendly product name) and keys for a subscription
     /// in a single call. Tolerant of a missing/inaccessible subscription (returns empty values), so the
@@ -323,31 +328,11 @@ public sealed class ApimManagementService
                 Product = await ResolveProductNameAsync(scope, ct)
             };
 
-            var secrets = await TryGetSecretsAsync(subscription, ct);
-            details.PrimaryKey = secrets.PrimaryKey;
-            details.SecondaryKey = secrets.SecondaryKey;
             return details;
         }
         catch (RequestFailedException)
         {
             return new SubscriptionDetails();
-        }
-    }
-
-    private static async Task<SubscriptionKeys> TryGetSecretsAsync(ApiManagementSubscriptionResource subscription, CancellationToken ct)
-    {
-        try
-        {
-            var secrets = await subscription.GetSecretsAsync(cancellationToken: ct);
-            return new SubscriptionKeys
-            {
-                PrimaryKey = secrets.Value.PrimaryKey,
-                SecondaryKey = secrets.Value.SecondaryKey
-            };
-        }
-        catch (RequestFailedException)
-        {
-            return new SubscriptionKeys();
         }
     }
 
