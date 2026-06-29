@@ -14,9 +14,13 @@ type UserSubscription = {
 
 type GroupSubscription = {
   subscriptionName: string
+  state?: string
   entraIdGroup?: string | null
   groupName?: string | null
 }
+
+/** APIM subscription state that should be surfaced in the table. */
+const ACTIVE_STATE = "active"
 
 type SubscriptionType = "User" | "Group"
 
@@ -221,17 +225,31 @@ async function loadSubscriptionType(
     return []
   }
   if (label === "Group") {
-    return (items as GroupSubscription[]).map(item => ({
-      type: "Group",
-      group: item.groupName || item.entraIdGroup || "—",
+    return (items as GroupSubscription[])
+      .filter(item => isActiveState(item.state))
+      .map(item => ({
+        type: "Group",
+        group: item.groupName || item.entraIdGroup || "—",
+        name: item.subscriptionName,
+      }))
+  }
+  return (items as UserSubscription[])
+    .filter(item => isActiveState(item.state))
+    .map(item => ({
+      type: "User",
+      group: "—",
       name: item.subscriptionName,
     }))
-  }
-  return (items as UserSubscription[]).map(item => ({
-    type: "User",
-    group: "—",
-    name: item.subscriptionName,
-  }))
+}
+
+/**
+ * Treats a subscription as active when APIM reports the "active" state.
+ * Subscriptions without a state (e.g. some group payloads) are kept so we
+ * don't hide entries the backend hasn't classified.
+ */
+function isActiveState(state: string | undefined | null): boolean {
+  if (!state) return true
+  return state.toLowerCase() === ACTIVE_STATE
 }
 
 function renderSubscriptions(rows: SubscriptionRow[]): void {

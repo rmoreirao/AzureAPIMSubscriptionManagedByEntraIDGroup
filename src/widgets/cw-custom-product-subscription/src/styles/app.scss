@@ -139,11 +139,30 @@ body {
   display: none;
 }
 
+.group-row .bar + .bar {
+  margin-top: 8px;
+}
+
 .group-disclaimer {
-  margin: 8px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
   font-size: 13px;
-  color: #605e5c;
-  font-style: italic;
+  color: #5c4400;
+  background: #fff4ce;
+  border: 1px solid #f2d98b;
+  border-radius: 4px;
+}
+
+.group-disclaimer__icon {
+  flex: 0 0 auto;
+  line-height: 1.4;
+}
+
+.group-disclaimer__text {
+  line-height: 1.4;
 }
 
 /* --- Active subscriptions empty state --- */
