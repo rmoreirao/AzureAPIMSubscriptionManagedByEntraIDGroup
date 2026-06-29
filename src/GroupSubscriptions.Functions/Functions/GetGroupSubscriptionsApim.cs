@@ -49,6 +49,16 @@ public sealed class GetGroupSubscriptionsApim
         _logger.LogInformation("Listing Group subscriptions for user {UserId} across {Count} APIM group(s)", result.UserId, groupIds.Length);
         var subscriptions = await _repository.GetByGroupsAsync(groupIds, ct);
 
+        // Optional product filter: when hosted on a product page the widget passes ?productId= so the
+        // grid only shows subscriptions scoped to that product. Match on the stored productId.
+        var productFilter = System.Web.HttpUtility.ParseQueryString(req.Url.Query).Get("productId");
+        if (!string.IsNullOrWhiteSpace(productFilter))
+        {
+            subscriptions = subscriptions
+                .Where(s => string.Equals(s.ProductId, productFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
         // Enrich each record with its current APIM state, product and keys for display in the table.
         var views = new List<GroupSubscriptionView>(subscriptions.Count);
         foreach (var subscription in subscriptions)

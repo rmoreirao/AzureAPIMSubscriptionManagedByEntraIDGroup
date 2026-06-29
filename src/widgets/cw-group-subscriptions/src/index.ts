@@ -46,9 +46,9 @@ type SubscriptionRow = {
 const MASK = "••••••••••••••••"
 
 // Fluent-style inline icons matching the OOB Dev Portal rename controls.
-const ICON_EDIT = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M14.6 2.6a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1l-8.4 8.4-3 .8.8-3 8.4-8.4ZM4 14v2h2l8.3-8.3-2-2L4 14Z"/></svg>`
-const ICON_SAVE = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 13.6 4 10.1l-1 1L7.5 16 17 6.5l-1-1z"/></svg>`
-const ICON_CANCEL = `<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.1 4.2 4.9 4 10 9.3 15.1 4l.8.2.2.8L10.7 10l5.4 5.1-.2.8-.8.2L10 10.7 4.9 16l-.8-.2-.2-.8L9.3 10 3.9 5z"/></svg>`
+const ICON_EDIT = `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M14.6 2.6a1.5 1.5 0 0 1 2.1 0l.7.7a1.5 1.5 0 0 1 0 2.1l-8.4 8.4-3 .8.8-3 8.4-8.4ZM4 14v2h2l8.3-8.3-2-2L4 14Z"/></svg>`
+const ICON_SAVE = `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 13.6 4 10.1l-1 1L7.5 16 17 6.5l-1-1z"/></svg>`
+const ICON_CANCEL = `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.1 4.2 4.9 4 10 9.3 15.1 4l.8.2.2.8L10.7 10l5.4 5.1-.2.8-.8.2L10 10.7 4.9 16l-.8-.2-.2-.8L9.3 10 3.9 5z"/></svg>`
 
 function setText(id: string, text: string): void {
   const el = document.getElementById(id)

@@ -74,6 +74,14 @@ function resolveProductScope(href: string | undefined, fallbackScope: string): s
   return fallbackScope
 }
 
+/** Extracts the product id from a `/products/{id}` scope, or "" for non-product (e.g. /apis) scopes. */
+function parseProductId(scope: string): string {
+  const marker = "/products/"
+  const i = scope.indexOf(marker)
+  if (i < 0) return ""
+  return scope.slice(i + marker.length).split("/")[0]
+}
+
 /**
  * Returns true when the configured Function base URL looks usable. The default placeholder contains
  * `<...>` which makes `fetch` throw synchronously (no network request, no console error), so we
@@ -138,7 +146,9 @@ async function main(): Promise<void> {
   // Scope new subscriptions to the product whose Dev Portal page hosts this widget
   // (parentLocation hash `#product={id}` → `/products/{id}`), falling back to the editor value.
   const scope = resolveProductScope(secrets.parentLocation?.href, values.scope)
-  logInfo("Resolved subscription scope", {parentHref: secrets.parentLocation?.href, scope})
+  // When hosted on a product page, restrict the grid to that product; otherwise show all.
+  const productId = parseProductId(scope)
+  logInfo("Resolved subscription scope", {parentHref: secrets.parentLocation?.href, scope, productId})
 
   // --- Create form: configurable labels ---
   setText("createHeading", values.createHeading)
@@ -159,7 +169,7 @@ async function main(): Promise<void> {
   if (submitButton) submitButton.textContent = values.personalButtonLabel
 
   // Load the caller's existing subscriptions (user + group) into the top table.
-  void refreshSubscriptions(apiFetch)
+  void refreshSubscriptions(apiFetch, productId)
 
   let groupsLoaded = false
 
@@ -181,7 +191,7 @@ async function main(): Promise<void> {
     }
   })
 
-  setupCreateForm(apiFetch, scope)
+  setupCreateForm(apiFetch, scope, productId)
 }
 
 // ---------------------------------------------------------------------------
@@ -194,11 +204,13 @@ function setSubsStatus(message: string, kind: StatusKind = "info"): void {
 async function loadSubscriptionType(
   apiFetch: ApiFetch,
   label: SubscriptionType,
-  path: string
+  path: string,
+  productId: string
 ): Promise<SubscriptionRow[]> {
-  logInfo(`GET ${path}`)
-  const response = await apiFetch(path)
-  logInfo(`GET ${path} response`, {status: response.status, ok: response.ok})
+  const fullPath = productId ? `${path}?productId=${encodeURIComponent(productId)}` : path
+  logInfo(`GET ${fullPath}`)
+  const response = await apiFetch(fullPath)
+  logInfo(`GET ${fullPath} response`, {status: response.status, ok: response.ok})
   if (!response.ok) {
     const body = await readBodySafe(response)
     throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
@@ -252,11 +264,11 @@ function renderSubscriptions(rows: SubscriptionRow[]): void {
   if (empty) empty.hidden = rows.length > 0
 }
 
-async function refreshSubscriptions(apiFetch: ApiFetch): Promise<void> {
+async function refreshSubscriptions(apiFetch: ApiFetch, productId: string): Promise<void> {
   setSubsStatus("Loading your subscriptions…")
   const [groupResult, userResult] = await Promise.allSettled([
-    loadSubscriptionType(apiFetch, "Group", "/apim/group-subscriptions"),
-    loadSubscriptionType(apiFetch, "User", "/user-subscriptions"),
+    loadSubscriptionType(apiFetch, "Group", "/apim/group-subscriptions", productId),
+    loadSubscriptionType(apiFetch, "User", "/user-subscriptions", productId),
   ])
 
   const rows: SubscriptionRow[] = []
@@ -339,7 +351,7 @@ async function loadGroups(apiFetch: ApiFetch, userId: string, placeholder: strin
 // ---------------------------------------------------------------------------
 // Create form: single inline bar handling both user and group subscriptions.
 // ---------------------------------------------------------------------------
-function setupCreateForm(apiFetch: ApiFetch, scope: string): void {
+function setupCreateForm(apiFetch: ApiFetch, scope: string, productId: string): void {
   const form = document.getElementById("createForm") as HTMLFormElement | null
   const typeSelect = document.getElementById("subType") as HTMLSelectElement | null
   const nameInput = document.getElementById("subName") as HTMLInputElement | null
@@ -392,7 +404,7 @@ function setupCreateForm(apiFetch: ApiFetch, scope: string): void {
       }
       setStatus("createStatus", "Subscription created successfully.", "success")
       if (nameInput) nameInput.value = ""
-      await refreshSubscriptions(apiFetch)
+      await refreshSubscriptions(apiFetch, productId)
     } catch (error) {
       logError("Failed to create subscription", error)
       setStatus("createStatus", `Failed to create the subscription: ${describeError(error)}`, "error")

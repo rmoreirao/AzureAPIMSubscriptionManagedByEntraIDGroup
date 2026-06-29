@@ -37,6 +37,16 @@ public sealed class GetUserSubscriptions
         _logger.LogInformation("Listing user subscriptions for user {UserId}", result.UserId);
         var subscriptions = await _apim.ListUserSubscriptionsAsync(result.UserId, ct);
 
+        // Optional product filter: when the widget is hosted on a product page it passes ?productId=,
+        // so the grid only shows subscriptions scoped to that product.
+        var productId = System.Web.HttpUtility.ParseQueryString(req.Url.Query).Get("productId");
+        if (!string.IsNullOrWhiteSpace(productId))
+        {
+            subscriptions = subscriptions
+                .Where(s => string.Equals(ApimManagementService.ParseProductId(s.Scope), productId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(subscriptions, ct);
         return response;
