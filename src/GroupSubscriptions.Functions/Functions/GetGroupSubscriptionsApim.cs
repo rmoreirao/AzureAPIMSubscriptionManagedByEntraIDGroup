@@ -9,8 +9,7 @@ using GroupSubscriptions.Functions.Services;
 namespace GroupSubscriptions.Functions.Functions;
 
 /// <summary>
-/// APIM-group variant of <see cref="GetGroupSubscriptions"/>: resolves the caller's groups from
-/// <b>APIM groups</b> instead of Entra ID.
+/// Lists the caller's Group subscriptions, resolving the caller's groups from <b>APIM groups</b>.
 /// </summary>
 public sealed class GetGroupSubscriptionsApim
 {

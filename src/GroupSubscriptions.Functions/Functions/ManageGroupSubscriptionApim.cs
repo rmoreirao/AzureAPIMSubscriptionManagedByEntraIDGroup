@@ -9,8 +9,9 @@ using GroupSubscriptions.Functions.Services;
 namespace GroupSubscriptions.Functions.Functions;
 
 /// <summary>
-/// APIM-group variant of <see cref="ManageGroupSubscription"/>: the caller's membership is verified
-/// against <b>APIM groups</b> instead of Entra ID.
+/// Manages a Group subscription (keys, regenerate, cancel, rename). The owning APIM group is
+/// derived from the persisted Cosmos record (looked up by <c>subscriptionId</c>) — never from client
+/// input — and the caller's membership of that group is verified before any action runs.
 /// </summary>
 public sealed class ManageGroupSubscriptionApim
 {
@@ -31,8 +32,7 @@ public sealed class ManageGroupSubscriptionApim
 
     [Function("ManageGroupSubscriptionApim")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "apim/group-subscriptions/{entraIdGroup}/{subscriptionId}/{action}")] HttpRequestData req,
-        string entraIdGroup,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "apim/group-subscriptions/{subscriptionId}/{action}")] HttpRequestData req,
         string subscriptionId,
         string action,
         CancellationToken ct)
@@ -44,20 +44,20 @@ public sealed class ManageGroupSubscriptionApim
             return req.CreateResponse(HttpStatusCode.Unauthorized);
         }
 
-        // The caller may only manage subscriptions belonging to an APIM group they are a member of.
-        if (!await _groups.IsMemberOfGroupAsync(result.UserId, entraIdGroup, ct))
-        {
-            _logger.LogWarning("User {UserId} is not a member of APIM group {Group}", result.UserId, entraIdGroup);
-            return req.CreateResponse(HttpStatusCode.Forbidden);
-        }
-
-        // Ensure the subscription actually belongs to the supplied group before acting on it.
-        var records = await _repository.GetByGroupsAsync(new[] { entraIdGroup }, ct);
-        var record = records.FirstOrDefault(r => r.SubscriptionId == subscriptionId);
+        // Resolve the owning APIM group from the persisted record (by subscriptionId), never from
+        // client input. Unknown subscription -> 404.
+        var record = await _repository.GetBySubscriptionIdAsync(subscriptionId, ct);
         if (record is null)
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found for APIM group {Group}", subscriptionId, entraIdGroup);
+            _logger.LogWarning("Subscription {SubscriptionId} not found", subscriptionId);
             return req.CreateResponse(HttpStatusCode.NotFound);
+        }
+
+        // The caller may only manage subscriptions belonging to an APIM group they are a member of.
+        if (!await _groups.IsMemberOfGroupAsync(result.UserId, record.ApimGroup, ct))
+        {
+            _logger.LogWarning("User {UserId} is not a member of APIM group {Group}", result.UserId, record.ApimGroup);
+            return req.CreateResponse(HttpStatusCode.Forbidden);
         }
 
         switch (action.ToLowerInvariant())

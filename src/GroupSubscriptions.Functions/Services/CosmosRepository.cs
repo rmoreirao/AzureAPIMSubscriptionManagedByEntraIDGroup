@@ -16,18 +16,18 @@ public sealed class CosmosRepository
     {
         var response = await _container.UpsertItemAsync(
             subscription,
-            new PartitionKey(subscription.EntraIdGroup),
+            new PartitionKey(subscription.ApimGroup),
             cancellationToken: ct);
         return response.Resource;
     }
 
-    public async Task<GroupSubscription?> GetAsync(string id, string entraIdGroup, CancellationToken ct = default)
+    public async Task<GroupSubscription?> GetAsync(string id, string apimGroup, CancellationToken ct = default)
     {
         try
         {
             var response = await _container.ReadItemAsync<GroupSubscription>(
                 id,
-                new PartitionKey(entraIdGroup),
+                new PartitionKey(apimGroup),
                 cancellationToken: ct);
             return response.Resource;
         }
@@ -35,6 +35,33 @@ public sealed class CosmosRepository
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Looks up a single Group subscription record by its APIM <paramref name="subscriptionId"/>
+    /// using a cross-partition query. Used to derive the owning APIM group from the persisted record
+    /// (never from client input) before authorizing a manage action.
+    /// </summary>
+    public async Task<GroupSubscription?> GetBySubscriptionIdAsync(string subscriptionId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(subscriptionId))
+        {
+            return null;
+        }
+
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.subscriptionId = @subscriptionId")
+            .WithParameter("@subscriptionId", subscriptionId);
+
+        using var iterator = _container.GetItemQueryIterator<GroupSubscription>(query);
+        while (iterator.HasMoreResults)
+        {
+            foreach (var item in await iterator.ReadNextAsync(ct))
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 
     public async Task<IReadOnlyList<GroupSubscription>> GetByGroupsAsync(IEnumerable<string> groupIds, CancellationToken ct = default)
@@ -45,7 +72,7 @@ public sealed class CosmosRepository
             return Array.Empty<GroupSubscription>();
         }
 
-        var query = new QueryDefinition("SELECT * FROM c WHERE ARRAY_CONTAINS(@groups, c.entraIdGroup)")
+        var query = new QueryDefinition("SELECT * FROM c WHERE ARRAY_CONTAINS(@groups, c.apimGroup)")
             .WithParameter("@groups", ids);
 
         var results = new List<GroupSubscription>();
@@ -65,7 +92,7 @@ public sealed class CosmosRepository
     /// Counts the group subscription records for a group that are scoped to the given product.
     /// Records persisted before product-scope tracking have an empty productId and therefore don't count.
     /// </summary>
-    public async Task<int> CountByGroupAndProductAsync(string entraIdGroup, string productId, CancellationToken ct = default)
+    public async Task<int> CountByGroupAndProductAsync(string apimGroup, string productId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(productId))
         {
@@ -73,13 +100,13 @@ public sealed class CosmosRepository
         }
 
         var query = new QueryDefinition(
-                "SELECT VALUE COUNT(1) FROM c WHERE c.entraIdGroup = @group AND c.productId = @productId AND (NOT IS_DEFINED(c.status) OR c.status != 'cancelled')")
-            .WithParameter("@group", entraIdGroup)
+                "SELECT VALUE COUNT(1) FROM c WHERE c.apimGroup = @group AND c.productId = @productId AND (NOT IS_DEFINED(c.status) OR c.status != 'cancelled')")
+            .WithParameter("@group", apimGroup)
             .WithParameter("@productId", productId);
 
         using var iterator = _container.GetItemQueryIterator<int>(
             query,
-            requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(entraIdGroup) });
+            requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(apimGroup) });
 
         var count = 0;
         while (iterator.HasMoreResults)
@@ -93,13 +120,13 @@ public sealed class CosmosRepository
         return count;
     }
 
-    public async Task DeleteAsync(string id, string entraIdGroup, CancellationToken ct = default)
+    public async Task DeleteAsync(string id, string apimGroup, CancellationToken ct = default)
     {
         try
         {
             await _container.DeleteItemAsync<GroupSubscription>(
                 id,
-                new PartitionKey(entraIdGroup),
+                new PartitionKey(apimGroup),
                 cancellationToken: ct);
         }
         catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)

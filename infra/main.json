@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "12812355461562146096"
+      "templateHash": "10457756940734219376"
     }
   },
   "parameters": {
@@ -289,7 +289,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "14746444790932062313"
+              "templateHash": "15129422413071077010"
             }
           },
           "parameters": {
@@ -378,7 +378,7 @@
                   "id": "[parameters('containerName')]",
                   "partitionKey": {
                     "paths": [
-                      "/entraIdGroup"
+                      "/apimGroup"
                     ],
                     "kind": "Hash"
                   }
@@ -721,7 +721,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "2424922849121316329"
+              "templateHash": "16187517399282065114"
             }
           },
           "parameters": {
@@ -803,13 +803,8 @@
                 "name": "manage-group-subscription",
                 "displayName": "Manage Group Subscription",
                 "method": "POST",
-                "urlTemplate": "/group-subscriptions/{entraIdGroup}/{subscriptionId}/{action}",
+                "urlTemplate": "/group-subscriptions/{subscriptionId}/{action}",
                 "templateParameters": [
-                  {
-                    "name": "entraIdGroup",
-                    "type": "string",
-                    "required": true
-                  },
                   {
                     "name": "subscriptionId",
                     "type": "string",

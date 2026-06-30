@@ -10,7 +10,7 @@ type SubscriptionType = "User" | "Group"
 type GroupSubscriptionView = {
   subscriptionId: string
   subscriptionName: string
-  entraIdGroup: string
+  apimGroup: string
   groupName: string
   state?: string | null
   product?: string | null
@@ -37,7 +37,7 @@ type SubscriptionRow = {
   subscriptionId: string
   subscriptionName: string
   group: string
-  entraIdGroup: string
+  apimGroup: string
   product: string
   state: string
   dateCreated: string
@@ -83,8 +83,8 @@ function normalizeGroup(item: GroupSubscriptionView): SubscriptionRow {
     type: "Group",
     subscriptionId: item.subscriptionId,
     subscriptionName: item.subscriptionName,
-    group: item.groupName || item.entraIdGroup || "",
-    entraIdGroup: item.entraIdGroup || "",
+    group: item.groupName || item.apimGroup || "",
+    apimGroup: item.apimGroup || "",
     product: item.product || "",
     state: item.state || "",
     dateCreated: item.dateCreated || "",
@@ -97,7 +97,7 @@ function normalizeUser(item: UserSubscriptionView): SubscriptionRow {
     subscriptionId: item.subscriptionId,
     subscriptionName: item.subscriptionName,
     group: "",
-    entraIdGroup: "",
+    apimGroup: "",
     product: item.product || item.scope || "",
     state: item.state || "",
     dateCreated: item.dateCreated || "",
@@ -135,7 +135,7 @@ async function main(): Promise<void> {
 
   function actionBasePath(row: SubscriptionRow): string {
     return row.type === "Group"
-      ? `/apim/group-subscriptions/${encodeURIComponent(row.entraIdGroup)}/${encodeURIComponent(row.subscriptionId)}`
+      ? `/apim/group-subscriptions/${encodeURIComponent(row.subscriptionId)}`
       : `/user-subscriptions/${encodeURIComponent(row.subscriptionId)}`
   }
 

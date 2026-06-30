@@ -92,13 +92,8 @@ var operations = [
     name: 'manage-group-subscription'
     displayName: 'Manage Group Subscription'
     method: 'POST'
-    urlTemplate: '/group-subscriptions/{entraIdGroup}/{subscriptionId}/{action}'
+    urlTemplate: '/group-subscriptions/{subscriptionId}/{action}'
     templateParameters: [
-      {
-        name: 'entraIdGroup'
-        type: 'string'
-        required: true
-      }
       {
         name: 'subscriptionId'
         type: 'string'

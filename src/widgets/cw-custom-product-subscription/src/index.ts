@@ -2,7 +2,7 @@ import {askForSecrets, getValues} from "@azure/api-management-custom-widgets-too
 import {valuesDefault} from "./values"
 import {createApiClient, ApiFetch} from "./api"
 
-type EntraGroup = {id: string; displayName: string}
+type ApimGroup = {id: string; displayName: string}
 
 type UserSubscription = {
   subscriptionId: string
@@ -15,7 +15,7 @@ type UserSubscription = {
 type GroupSubscription = {
   subscriptionName: string
   state?: string
-  entraIdGroup?: string | null
+  apimGroup?: string | null
   groupName?: string | null
 }
 
@@ -229,7 +229,7 @@ async function loadSubscriptionType(
       .filter(item => isActiveState(item.state))
       .map(item => ({
         type: "Group",
-        group: item.groupName || item.entraIdGroup || "—",
+        group: item.groupName || item.apimGroup || "—",
         name: item.subscriptionName,
       }))
   }
@@ -346,7 +346,7 @@ async function loadGroups(apiFetch: ApiFetch, userId: string, placeholder: strin
       const body = await readBodySafe(response)
       throw new Error(`HTTP ${response.status} ${response.statusText} — ${body}`)
     }
-    const groups: EntraGroup[] = await response.json()
+    const groups: ApimGroup[] = await response.json()
     if (groupSelect) {
       groupSelect.innerHTML = ""
       addPlaceholder()
@@ -385,8 +385,8 @@ function setupCreateForm(apiFetch: ApiFetch, scope: string, productId: string): 
     }
 
     const isGroup = typeSelect?.value === "group"
-    const entraIdGroup = groupSelect?.value
-    if (isGroup && !entraIdGroup) {
+    const apimGroup = groupSelect?.value
+    if (isGroup && !apimGroup) {
       setStatus("createStatus", "Please select an APIM group.", "error")
       return
     }
@@ -396,11 +396,11 @@ function setupCreateForm(apiFetch: ApiFetch, scope: string, productId: string): 
     try {
       if (isGroup) {
         const groupName = groupSelect?.selectedOptions[0]?.textContent ?? ""
-        logInfo("POST /apim/group-subscriptions", {subscriptionName, entraIdGroup, groupName, scope})
+        logInfo("POST /apim/group-subscriptions", {subscriptionName, apimGroup, groupName, scope})
         const response = await apiFetch("/apim/group-subscriptions", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({subscriptionName, entraIdGroup, groupName, scope}),
+          body: JSON.stringify({subscriptionName, apimGroup, groupName, scope}),
         })
         logInfo("POST /apim/group-subscriptions response", {status: response.status, ok: response.ok})
         if (!response.ok) {

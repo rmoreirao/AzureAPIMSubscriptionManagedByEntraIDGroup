@@ -71,11 +71,12 @@ Group membership is resolved from the **APIM Groups**. Only **custom** APIM grou
 | GET | `/api/apim/users/{userId}/groups` | List the user's **custom APIM** groups. Only the authenticated user may read their own groups. |
 | POST | `/api/apim/group-subscriptions` | Create standalone APIM subscription + persist record. Caller must be a member of the target **custom** APIM group. |
 | GET | `/api/apim/group-subscriptions` | List subscriptions for the caller's custom APIM groups (resolved server-side), enriched with current APIM keys. |
-| POST | `/api/apim/group-subscriptions/{group}/{subscriptionId}/{regenerate\|cancel\|rename}` | Regenerate keys, cancel, or rename. Caller must be a member of the custom APIM group that owns the subscription. |
+| POST | `/api/apim/group-subscriptions/{subscriptionId}/{regenerate\|cancel\|rename}` | Regenerate keys, cancel, or rename. The owning APIM group is derived from the stored record (by `subscriptionId`) — an unknown id returns **404**; a caller who is not a member of that group receives **403**, checked before any action runs. |
 
 > The same Cosmos container backs these endpoints; the group identifier (an APIM group id like
-> `Group1`) is stored opaquely in the record's group field. The custom widgets
-> point at the `/api/apim/...` endpoints.
+> `Group1`) is stored in the record's `apimGroup` field (also the container partition key). For every
+> manage action the owning group is read from the persisted record and never trusted from client
+> input. The custom widgets point at the `/api/apim/...` endpoints.
 
 
 ### Dev Portal authentication

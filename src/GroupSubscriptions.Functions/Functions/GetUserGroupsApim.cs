@@ -8,8 +8,7 @@ using GroupSubscriptions.Functions.Services;
 namespace GroupSubscriptions.Functions.Functions;
 
 /// <summary>
-/// APIM-group variant of <see cref="GetUserGroups"/>: lists the caller's <b>APIM groups</b>
-/// (built-in + custom) instead of their Entra ID groups.
+/// Lists the caller's <b>APIM groups</b> (custom groups eligible for group subscriptions).
 /// </summary>
 public sealed class GetUserGroupsApim
 {

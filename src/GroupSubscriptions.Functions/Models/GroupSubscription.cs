@@ -20,8 +20,8 @@ public sealed class GroupSubscription
     [JsonPropertyName("subscriptionName")]
     public string SubscriptionName { get; set; } = string.Empty;
 
-    [JsonPropertyName("entraIdGroup")]
-    public string EntraIdGroup { get; set; } = string.Empty;
+    [JsonPropertyName("apimGroup")]
+    public string ApimGroup { get; set; } = string.Empty;
 
     /// <summary>The APIM scope this subscription was created with (e.g. <c>/products/{id}</c> or <c>/apis</c>).</summary>
     [JsonPropertyName("scope")]
@@ -42,14 +42,14 @@ public sealed class GroupSubscription
 public sealed class CreateGroupSubscriptionRequest
 {
     public string SubscriptionName { get; set; } = string.Empty;
-    public string EntraIdGroup { get; set; } = string.Empty;
+    public string ApimGroup { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
 
     /// <summary>APIM scope for the standalone subscription (e.g. /products/{id} or /apis).</summary>
     public string Scope { get; set; } = string.Empty;
 }
 
-public sealed class EntraGroup
+public sealed class ApimGroup
 {
     public string Id { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
@@ -104,7 +104,7 @@ public sealed class GroupSubscriptionView
     public string Id { get; set; } = string.Empty;
     public string SubscriptionId { get; set; } = string.Empty;
     public string SubscriptionName { get; set; } = string.Empty;
-    public string EntraIdGroup { get; set; } = string.Empty;
+    public string ApimGroup { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string Scope { get; set; } = string.Empty;
@@ -118,7 +118,7 @@ public sealed class GroupSubscriptionView
         Id = s.Id,
         SubscriptionId = s.SubscriptionId,
         SubscriptionName = s.SubscriptionName,
-        EntraIdGroup = s.EntraIdGroup,
+        ApimGroup = s.ApimGroup,
         GroupName = s.GroupName,
         DateCreated = s.DateCreated,
         PrimaryKey = keys.PrimaryKey,
@@ -130,7 +130,7 @@ public sealed class GroupSubscriptionView
         Id = s.Id,
         SubscriptionId = s.SubscriptionId,
         SubscriptionName = s.SubscriptionName,
-        EntraIdGroup = s.EntraIdGroup,
+        ApimGroup = s.ApimGroup,
         GroupName = s.GroupName,
         State = details.State,
         Scope = details.Scope,

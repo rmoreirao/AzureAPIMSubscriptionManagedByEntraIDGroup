@@ -9,9 +9,8 @@ using GroupSubscriptions.Functions.Services;
 namespace GroupSubscriptions.Functions.Functions;
 
 /// <summary>
-/// APIM-group variant of <see cref="SaveGroupSubscription"/>: the caller's membership is verified
-/// against <b>APIM groups</b> instead of Entra ID. The APIM group id is stored in the existing
-/// group fields of the Cosmos record.
+/// Creates a Group subscription: the caller's membership is verified against <b>APIM groups</b>.
+/// The APIM group id is stored in the record's group fields.
 /// </summary>
 public sealed class SaveGroupSubscriptionApim
 {
@@ -45,17 +44,17 @@ public sealed class SaveGroupSubscriptionApim
         }
 
         var request = await req.ReadFromJsonAsync<CreateGroupSubscriptionRequest>(ct);
-        if (request is null || string.IsNullOrWhiteSpace(request.SubscriptionName) || string.IsNullOrWhiteSpace(request.EntraIdGroup))
+        if (request is null || string.IsNullOrWhiteSpace(request.SubscriptionName) || string.IsNullOrWhiteSpace(request.ApimGroup))
         {
             var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-            await bad.WriteStringAsync("subscriptionName and entraIdGroup are required.", ct);
+            await bad.WriteStringAsync("subscriptionName and apimGroup are required.", ct);
             return bad;
         }
 
         // The caller may only create a Group subscription for an APIM group they are a member of.
-        if (!await _groups.IsMemberOfGroupAsync(result.UserId, request.EntraIdGroup, ct))
+        if (!await _groups.IsMemberOfGroupAsync(result.UserId, request.ApimGroup, ct))
         {
-            _logger.LogWarning("User {UserId} is not a member of APIM group {Group}", result.UserId, request.EntraIdGroup);
+            _logger.LogWarning("User {UserId} is not a member of APIM group {Group}", result.UserId, request.ApimGroup);
             return req.CreateResponse(HttpStatusCode.Forbidden);
         }
 
@@ -74,17 +73,17 @@ public sealed class SaveGroupSubscriptionApim
         }
 
         // Enforce the product's Max Subscriptions limit for this team/group.
-        var currentCount = await _repository.CountByGroupAndProductAsync(request.EntraIdGroup, productId, ct);
+        var currentCount = await _repository.CountByGroupAndProductAsync(request.ApimGroup, productId, ct);
         var decision = await _limits.EvaluateAsync(productId, currentCount, SubscriptionLimitService.OwnerKind.Team, ct);
         if (!decision.Allowed)
         {
-            _logger.LogWarning("APIM group {Group} reached the subscription limit for product {ProductId}", request.EntraIdGroup, productId);
+            _logger.LogWarning("APIM group {Group} reached the subscription limit for product {ProductId}", request.ApimGroup, productId);
             var conflict = req.CreateResponse(HttpStatusCode.Conflict);
             await conflict.WriteStringAsync(decision.Message!, ct);
             return conflict;
         }
 
-        _logger.LogInformation("Creating APIM subscription {SubscriptionId} for APIM group {Group}", apimSubscriptionId, request.EntraIdGroup);
+        _logger.LogInformation("Creating APIM subscription {SubscriptionId} for APIM group {Group}", apimSubscriptionId, request.ApimGroup);
         string createdId;
         SubscriptionKeys keys;
         try
@@ -108,11 +107,11 @@ public sealed class SaveGroupSubscriptionApim
 
         var record = new GroupSubscription
         {
-            GroupId = request.EntraIdGroup,
+            GroupId = request.ApimGroup,
             GroupName = request.GroupName,
             SubscriptionId = createdId,
             SubscriptionName = request.SubscriptionName,
-            EntraIdGroup = request.EntraIdGroup,
+            ApimGroup = request.ApimGroup,
             Scope = scope,
             ProductId = productId
         };

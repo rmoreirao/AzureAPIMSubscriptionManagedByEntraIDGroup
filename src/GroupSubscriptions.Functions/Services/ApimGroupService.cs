@@ -7,9 +7,9 @@ namespace GroupSubscriptions.Functions.Services;
 
 /// <summary>
 /// Resolves group membership from the <b>APIM Groups</b> (built-in + custom) that the Dev Portal
-/// uses, rather than from Entra ID. Reads the APIM control
+/// uses. Reads the APIM control
 /// plane via the shared <see cref="ArmClient"/>. The Function managed identity already has
-/// <c>API Management Service Contributor</c>, so no extra RBAC/Graph permissions are required.
+/// <c>API Management Service Contributor</c>, so no extra RBAC permissions are required.
 /// </summary>
 public sealed class ApimGroupService
 {
@@ -39,9 +39,9 @@ public sealed class ApimGroupService
     /// <see cref="IsMemberOfGroupAsync"/> and the list endpoints all use this method, the custom-only
     /// rule is enforced both when returning available groups and on subscription creation.
     /// </summary>
-    public async Task<IReadOnlyList<EntraGroup>> GetUserGroupsAsync(string userId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ApimGroup>> GetUserGroupsAsync(string userId, CancellationToken ct = default)
     {
-        var groups = new List<EntraGroup>();
+        var groups = new List<ApimGroup>();
         var user = GetUser(userId);
 
         await foreach (var group in user.GetUserGroupsAsync(cancellationToken: ct))
@@ -51,7 +51,7 @@ public sealed class ApimGroupService
                 continue;
             }
 
-            groups.Add(new EntraGroup
+            groups.Add(new ApimGroup
             {
                 Id = group.Data.Name ?? string.Empty,
                 DisplayName = group.Data.DisplayName ?? group.Data.Name ?? string.Empty
