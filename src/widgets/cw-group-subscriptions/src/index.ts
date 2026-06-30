@@ -50,11 +50,6 @@ const ICON_EDIT = `<svg width="16" height="16" viewBox="0 0 20 20" fill="current
 const ICON_SAVE = `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 13.6 4 10.1l-1 1L7.5 16 17 6.5l-1-1z"/></svg>`
 const ICON_CANCEL = `<svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.1 4.2 4.9 4 10 9.3 15.1 4l.8.2.2.8L10.7 10l5.4 5.1-.2.8-.8.2L10 10.7 4.9 16l-.8-.2-.2-.8L9.3 10 3.9 5z"/></svg>`
 
-function setText(id: string, text: string): void {
-  const el = document.getElementById(id)
-  if (el) el.innerText = text
-}
-
 function formatDate(value: string): string {
   if (!value) return ""
   const date = new Date(value)
@@ -109,8 +104,6 @@ async function main(): Promise<void> {
   const secrets = await askForSecrets("app")
   const apiFetch = createApiClient(secrets, values.functionBaseUrl)
 
-  setText("title", values.title)
-
   const status = document.getElementById("status")
   const tableBody = document.getElementById("tableBody") as HTMLTableSectionElement | null
   const emptyState = document.getElementById("emptyState")
@@ -126,13 +119,52 @@ async function main(): Promise<void> {
   let allRows: SubscriptionRow[] = []
 
   // Tracks the kebab menu that is currently open so we can close it on an outside click.
+  // The menu is portaled into document.body while open (position: fixed) so it escapes the
+  // table's `overflow: hidden` and the scroll container, then detached again on close.
   let openMenu: HTMLElement | null = null
+
+  // Closes the menu while scrolling/resizing; bound only while a menu is open.
+  function onViewportChange(): void {
+    closeMenu()
+  }
 
   function closeMenu(): void {
     if (openMenu) {
       openMenu.hidden = true
+      openMenu.remove()
       openMenu = null
+      window.removeEventListener("scroll", onViewportChange, true)
+      window.removeEventListener("resize", onViewportChange)
     }
+  }
+
+  // Portals `menu` into the body and positions it next to `anchor` (the kebab button),
+  // flipping upward when there isn't enough room below and clamping to the viewport.
+  function openMenuAt(menu: HTMLElement, anchor: HTMLElement): void {
+    const gap = 4
+    const margin = 8
+    document.body.append(menu)
+    menu.hidden = false
+    openMenu = menu
+
+    const rect = anchor.getBoundingClientRect()
+    const menuWidth = menu.offsetWidth
+    const menuHeight = menu.offsetHeight
+
+    let left = rect.right - menuWidth
+    left = Math.min(Math.max(left, margin), window.innerWidth - menuWidth - margin)
+
+    const spaceBelow = window.innerHeight - rect.bottom
+    let top = rect.bottom + gap
+    if (spaceBelow < menuHeight + gap + margin && rect.top > menuHeight + gap) {
+      top = rect.top - menuHeight - gap
+    }
+
+    menu.style.left = `${Math.round(left)}px`
+    menu.style.top = `${Math.round(top)}px`
+
+    window.addEventListener("scroll", onViewportChange, true)
+    window.addEventListener("resize", onViewportChange)
   }
 
   document.addEventListener("click", () => closeMenu())
@@ -387,15 +419,14 @@ async function main(): Promise<void> {
       kebab.setAttribute("aria-label", "Subscription actions")
       kebab.addEventListener("click", e => {
         e.stopPropagation()
-        const willOpen = menu.hidden
+        const willOpen = openMenu !== menu
         closeMenu()
         if (willOpen) {
-          menu.hidden = false
-          openMenu = menu
+          openMenuAt(menu, kebab)
         }
       })
 
-      actionsCell.append(kebab, menu)
+      actionsCell.append(kebab)
     }
     tr.append(actionsCell)
 
@@ -417,6 +448,7 @@ async function main(): Promise<void> {
   // the result count and empty/no-match message in sync.
   function applyFilters(): void {
     if (!tableBody) return
+    closeMenu()
     const term = (filterSearch?.value ?? "").trim().toLowerCase()
     const type = filterType?.value ?? ""
     const product = filterProduct?.value ?? ""

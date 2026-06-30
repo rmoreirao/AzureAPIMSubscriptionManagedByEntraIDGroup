@@ -19,27 +19,6 @@ body {
   margin: 0 0 4px;
 }
 
-.subs-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin: 0 0 12px;
-}
-
-.subs-head__title {
-  font-size: 22px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
-  color: #323130;
-  margin: 0;
-}
-
-.subs-count {
-  font-size: 13px;
-  color: #605e5c;
-}
-
 /* Same table grid as the cw-group-subscriptions widget. */
 .group-table {
   width: 100%;

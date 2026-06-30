@@ -254,7 +254,6 @@ function isActiveState(state: string | undefined | null): boolean {
 
 function renderSubscriptions(rows: SubscriptionRow[]): void {
   const body = document.getElementById("subsBody")
-  const count = document.getElementById("subsCount")
   const empty = document.getElementById("subsEmpty")
   if (!body) return
 
@@ -278,7 +277,6 @@ function renderSubscriptions(rows: SubscriptionRow[]): void {
     body.appendChild(tr)
   }
 
-  if (count) count.textContent = rows.length ? `${rows.length} total` : ""
   if (empty) empty.hidden = rows.length > 0
 }
 
