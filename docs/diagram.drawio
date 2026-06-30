@@ -1,6 +1,87 @@
-<mxfile host="Electron">
-  <diagram name="Page-1" id="T8f7-eCxr0yKBs4PxTg5">
-    <mxGraphModel dx="3012" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+<mxfile host="Electron" pages="2">
+  <diagram id="InrdHYS2YSgTSVDyGX91" name="SolutionSimplified">
+    <mxGraphModel dx="877" dy="1219" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-1" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Person.svg;" value="User" vertex="1">
+          <mxGeometry height="50" width="37" x="200" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-2" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="APIM Product" vertex="1">
+          <mxGeometry height="40" width="50" x="570" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-3" parent="1" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#505050;shape=mxgraph.mscae.intune.user_group" value="APIM Group" vertex="1">
+          <mxGeometry height="37" width="50" x="200" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-4" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Key.svg;" value="Subscription" vertex="1">
+          <mxGeometry height="50" width="31" x="394" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-5" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.032;entryY=0.4;entryDx=0;entryDy=0;entryPerimeter=0;" target="m7czKy-QLsjRu-7CjLx5-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="230" y="135" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-6" edge="1" parent="1" source="m7czKy-QLsjRu-7CjLx5-4" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="570" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-7" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Person.svg;" value="User 1" vertex="1">
+          <mxGeometry height="50" width="37" x="90" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-8" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Person.svg;" value="User 2" vertex="1">
+          <mxGeometry height="50" width="37" x="80" y="347" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-9" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Person.svg;" value="User 3" vertex="1">
+          <mxGeometry height="50" width="37" x="117" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-10" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Key.svg;" value="Subscription" vertex="1">
+          <mxGeometry height="50" width="31" x="394" y="303.5" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-11" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="APIM Product" vertex="1">
+          <mxGeometry height="40" width="50" x="570" y="308.5" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-12" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="328" as="sourcePoint" />
+            <mxPoint x="390" y="328" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-13" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.538;entryDx=0;entryDy=0;entryPerimeter=0;" target="m7czKy-QLsjRu-7CjLx5-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="430" y="330" as="sourcePoint" />
+            <mxPoint x="660" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-16" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="280" as="sourcePoint" />
+            <mxPoint x="190" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-17" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="380" as="sourcePoint" />
+            <mxPoint x="180" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-18" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="460" as="sourcePoint" />
+            <mxPoint x="200" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontStyle=1" value="AS IS:&amp;nbsp;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Subscription is associated to a user. Only that user is able to manage the subscripiton from DevPortal&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="250" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="m7czKy-QLsjRu-7CjLx5-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontStyle=1" value="SOLUTION:&amp;nbsp;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;Subscription is associated to a Group - all users from the Group are able to manage the Subscription from DevPortal&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="295.5" x="257.25" y="240" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="SolutionComponents" id="T8f7-eCxr0yKBs4PxTg5">
+    <mxGraphModel dx="3589" dy="1647" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />

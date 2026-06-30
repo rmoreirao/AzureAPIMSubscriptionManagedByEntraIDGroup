@@ -24,7 +24,7 @@ jobs:
           path: docs
           format: png
           output: export
-          remove-page-suffix: true
+          remove-page-suffix: false
           action-mode: all
 
       - name: Commit exported images

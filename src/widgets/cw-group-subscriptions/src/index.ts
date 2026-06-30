@@ -115,6 +115,16 @@ async function main(): Promise<void> {
   const tableBody = document.getElementById("tableBody") as HTMLTableSectionElement | null
   const emptyState = document.getElementById("emptyState")
 
+  const filterSearch = document.getElementById("filterSearch") as HTMLInputElement | null
+  const filterType = document.getElementById("filterType") as HTMLSelectElement | null
+  const filterProduct = document.getElementById("filterProduct") as HTMLSelectElement | null
+  const filterState = document.getElementById("filterState") as HTMLSelectElement | null
+  const filterClear = document.getElementById("filterClear")
+  const filterCount = document.getElementById("filterCount")
+
+  // All loaded rows (User + Group). The visible table is always a filtered view of this.
+  let allRows: SubscriptionRow[] = []
+
   // Tracks the kebab menu that is currently open so we can close it on an outside click.
   let openMenu: HTMLElement | null = null
 
@@ -359,11 +369,11 @@ async function main(): Promise<void> {
         try {
           const response = await apiFetch(`${actionBasePath(row)}/cancel`, {method: "POST"})
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          // Keep the row visible but mark it cancelled (no usable keys), matching what the
-          // grid shows after a reload, rather than removing it from the table.
+          // Mark the row cancelled, then re-apply filters so the now-inactive row drops out
+          // of the table when the (default) Active filter is in effect.
           row.state = "Cancelled"
-          tr.replaceWith(renderRow(row))
           setStatus(`Subscription "${row.subscriptionName}" cancelled.`, "success")
+          applyFilters()
         } catch (error) {
           console.error(`${LOG} failed to cancel "${row.subscriptionName}" (${row.subscriptionId})`, error)
           setStatus(`Failed to cancel "${row.subscriptionName}".`, "error")
@@ -390,6 +400,58 @@ async function main(): Promise<void> {
     tr.append(actionsCell)
 
     return tr
+  }
+
+  // Fills the Product dropdown with the distinct, sorted product names found in the loaded rows,
+  // preserving the leading "All products" option.
+  function populateProducts(): void {
+    if (!filterProduct) return
+    while (filterProduct.options.length > 1) filterProduct.remove(1)
+    const products = Array.from(new Set(allRows.map(r => r.product).filter(Boolean))).sort()
+    for (const product of products) {
+      filterProduct.appendChild(el("option", {value: product, textContent: product}))
+    }
+  }
+
+  // Renders the table as a filtered view of `allRows` driven by the toolbar controls, and keeps
+  // the result count and empty/no-match message in sync.
+  function applyFilters(): void {
+    if (!tableBody) return
+    const term = (filterSearch?.value ?? "").trim().toLowerCase()
+    const type = filterType?.value ?? ""
+    const product = filterProduct?.value ?? ""
+    const state = filterState?.value ?? ""
+
+    const filtered = allRows.filter(row => {
+      if (term && !row.subscriptionName.toLowerCase().includes(term)) return false
+      if (type && row.type !== type) return false
+      if (product && row.product !== product) return false
+      if (state) {
+        const active = isActive(row.state)
+        if (state === "Active" && !active) return false
+        if (state === "Inactive" && active) return false
+      }
+      return true
+    })
+
+    tableBody.innerHTML = ""
+    for (const row of filtered) {
+      tableBody.appendChild(renderRow(row))
+    }
+
+    if (filterCount) filterCount.innerHTML = `Showing <b>${filtered.length}</b> of ${allRows.length}`
+
+    if (emptyState) {
+      if (allRows.length === 0) {
+        emptyState.textContent = "You have no subscriptions yet."
+        emptyState.hidden = false
+      } else if (filtered.length === 0) {
+        emptyState.textContent = "No subscriptions match your filters."
+        emptyState.hidden = false
+      } else {
+        emptyState.hidden = true
+      }
+    }
   }
 
   async function loadType(label: SubscriptionType, path: string): Promise<SubscriptionRow[]> {
@@ -422,7 +484,6 @@ async function main(): Promise<void> {
   if (userResult.status === "fulfilled") rows.push(...userResult.value)
 
   if (!tableBody) return
-  tableBody.innerHTML = ""
 
   const groupFailed = groupResult.status === "rejected"
   const userFailed = userResult.status === "rejected"
@@ -433,13 +494,22 @@ async function main(): Promise<void> {
     return
   }
 
-  for (const row of rows) {
-    tableBody.appendChild(renderRow(row))
-  }
+  allRows = rows
+  populateProducts()
 
-  if (rows.length === 0) {
-    if (emptyState) emptyState.hidden = false
+  for (const control of [filterSearch, filterType, filterProduct, filterState]) {
+    control?.addEventListener("input", applyFilters)
   }
+  filterClear?.addEventListener("click", () => {
+    if (filterSearch) filterSearch.value = ""
+    if (filterType) filterType.value = ""
+    if (filterProduct) filterProduct.value = ""
+    // The State filter defaults to "Active", so clearing restores that rather than "All states".
+    if (filterState) filterState.value = "Active"
+    applyFilters()
+  })
+
+  applyFilters()
 
   if (groupFailed || userFailed) {
     const failed = groupFailed ? "group" : "user"

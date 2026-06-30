@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filter Option 2 — Search + quick-filter chips</title>
+  <style>
+    :root {
+      --blue:#0078d4; --blue-dark:#106ebe; --ink:#323130; --muted:#605e5c;
+      --line:#edebe9; --line2:#e1dfdd; --head:#f3f2f1; --bg:#faf9f8;
+      --green:#107c10; --red:#a4262c; --purple:#5c2e91;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:40px 24px; background:var(--bg); color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.4; }
+    .stage { max-width:1040px; margin:0 auto; }
+    .back { display:inline-block; font-size:13px; color:var(--blue); text-decoration:none; margin-bottom:18px; }
+    .back:hover { text-decoration:underline; }
+    .title { font-size:22px; font-weight:600; margin:0 0 4px; }
+    .lede { color:var(--muted); margin:0 0 22px; font-size:14px; max-width:760px; }
+
+    /* ---- chips bar ---- */
+    .bar { background:#fff; border:1px solid var(--line2); border-bottom:none; border-radius:8px 8px 0 0; padding:14px 16px; }
+    .row1 { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .search { position:relative; flex:1 1 240px; min-width:200px; }
+    .search input { width:100%; padding:8px 12px 8px 32px; font-size:14px; border:1px solid #8a8886; border-radius:6px; background:#fff; }
+    .search svg { position:absolute; left:9px; top:9px; color:var(--muted); pointer-events:none; }
+    .search input:focus, .control:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+    .control { padding:8px 11px; font-size:14px; border:1px solid #8a8886; border-radius:6px; background:#fff; }
+    .count { font-size:13px; color:var(--muted); white-space:nowrap; }
+    .count b { color:var(--ink); }
+
+    .chips { display:flex; flex-wrap:wrap; gap:18px; align-items:center; }
+    .chipgroup { display:flex; align-items:center; gap:8px; }
+    .chipgroup .lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    .chip { border:1px solid var(--line2); background:#fff; color:var(--ink); font-size:13px; font-weight:600;
+      padding:5px 13px; border-radius:999px; cursor:pointer; transition:all .12s; }
+    .chip:hover { border-color:#c7c6c4; }
+    .chip.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+    /* ---- grid (shared look) ---- */
+    .table-wrap { overflow-x:auto; border:1px solid var(--line2); border-radius:0 0 8px 8px; background:#fff; }
+    table { width:100%; border-collapse:separate; border-spacing:0; font-size:15px; }
+    th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap; }
+    th { font-weight:600; background:var(--head); position:sticky; top:0; z-index:2; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:#f9f9f9; }
+    .key { font-family:"Cascadia Code",Consolas,monospace; margin-right:8px; color:var(--muted); }
+    .link-btn { background:none; border:none; color:var(--blue); cursor:pointer; font-size:14px; padding:0; }
+    .link-btn:hover { text-decoration:underline; }
+    .pill { display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; }
+    .pill.user { color:var(--purple); background:#f3eefb; }
+    .pill.group { color:var(--green); background:#eafaea; }
+    .state { font-weight:600; }
+    .state.active { color:var(--green); }
+    .state.inactive { color:var(--red); }
+    .muted { color:var(--muted); font-style:italic; }
+    .col-actions { position:sticky; right:0; width:48px; text-align:center; background:#fff; box-shadow:-6px 0 8px -6px rgba(0,0,0,.18); }
+    th.col-actions { background:var(--head); z-index:3; }
+    tbody tr:hover td.col-actions { background:#f9f9f9; }
+    .kebab { background:none; border:none; cursor:pointer; font-size:18px; line-height:1; padding:4px 8px; border-radius:4px; color:var(--muted); }
+    .kebab:hover { background:#efefef; color:var(--ink); }
+    .menu { position:absolute; right:10px; z-index:20; min-width:210px; background:#fff; border:1px solid var(--line); border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.16); padding:4px 0; }
+    .menu[hidden] { display:none; }
+    .menu button { display:block; width:100%; text-align:left; background:none; border:none; padding:8px 14px; font-size:14px; cursor:pointer; color:var(--ink); }
+    .menu button:hover { background:var(--head); }
+    .menu button.danger { color:var(--red); }
+    .empty { padding:34px 16px; text-align:center; color:var(--muted); }
+    .empty button { background:none; border:none; color:var(--blue); font-weight:600; cursor:pointer; }
+    .empty button:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="./index.html">&larr; All prototypes</a>
+    <h1 class="title">Group Subscriptions — Search + quick-filter chips</h1>
+    <p class="lede">Option 2. A search box on top, then one-click toggle chips for the common facets
+      (Type and State) and a small Product dropdown. Tapping a chip filters instantly; the active chip is
+      highlighted. Great for the most frequent "just show me my active group subs" actions. The Actions
+      column stays pinned so the kebab is never cut off.</p>
+
+    <div class="bar">
+      <div class="row1">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8.5 3a5.5 5.5 0 0 1 4.23 9.02l3.12 3.13-1.06 1.06-3.13-3.12A5.5 5.5 0 1 1 8.5 3Zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+          <input id="q" type="text" placeholder="Search by name…" autocomplete="off" />
+        </div>
+        <select id="fProduct" class="control"><option value="">All products</option></select>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="chips">
+        <div class="chipgroup" id="typeChips">
+          <span class="lbl">Type</span>
+          <button class="chip active" data-val="">All</button>
+          <button class="chip" data-val="User">User</button>
+          <button class="chip" data-val="Group">Group</button>
+        </div>
+        <div class="chipgroup" id="stateChips">
+          <span class="lbl">State</span>
+          <button class="chip active" data-val="">All</button>
+          <button class="chip" data-val="Active">Active</button>
+          <button class="chip" data-val="Inactive">Inactive</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Type</th><th>Group</th><th>Product</th><th>State</th>
+            <th>Primary key</th><th>Secondary key</th><th>Date created</th><th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden>No subscriptions match your filters. <button id="emptyClear" type="button">Clear filters</button></div>
+  </div>
+
+  <script>
+    // ---- shared mock dataset (both User and Group subscriptions) ----
+    const DATA = [
+      { type:"Group", name:"payments-prod",       group:"Payments Team",  product:"Payments API",      state:"Active",    date:"2026-01-12" },
+      { type:"Group", name:"payments-staging",    group:"Payments Team",  product:"Payments API",      state:"Active",    date:"2026-02-03" },
+      { type:"User",  name:"rmoreirao-sandbox",   group:"",               product:"Starter",           state:"Active",    date:"2026-03-21" },
+      { type:"Group", name:"orders-prod",         group:"Orders Team",    product:"Orders API",        state:"Active",    date:"2025-11-08" },
+      { type:"Group", name:"orders-legacy",       group:"Orders Team",    product:"Orders API",        state:"Cancelled", date:"2025-09-15" },
+      { type:"User",  name:"demo-key",            group:"",               product:"Unlimited",         state:"Active",    date:"2026-04-02" },
+      { type:"User",  name:"old-trial",           group:"",               product:"Starter",           state:"Suspended", date:"2025-06-30" },
+      { type:"Group", name:"inventory-prod",      group:"Inventory Team", product:"Inventory API",     state:"Active",    date:"2026-02-19" },
+      { type:"Group", name:"inventory-test",      group:"Inventory Team", product:"Inventory API",     state:"Suspended", date:"2025-12-01" },
+      { type:"User",  name:"analytics-personal",  group:"",               product:"Analytics API",     state:"Active",    date:"2026-05-10" },
+      { type:"Group", name:"analytics-shared",    group:"Data Science",   product:"Analytics API",     state:"Active",    date:"2026-03-30" },
+      { type:"User",  name:"legacy-app",          group:"",               product:"Unlimited",         state:"Cancelled", date:"2025-07-22" },
+      { type:"Group", name:"notifications-prod",  group:"Platform",       product:"Notifications API", state:"Active",    date:"2026-01-28" },
+      { type:"User",  name:"qa-automation",       group:"",               product:"Starter",           state:"Active",    date:"2026-04-18" },
+    ]
+    const FAKE_KEY = "a1b2c3d4e5f6g7h8i9j0k1l2"
+    const isActive = s => (s || "").toLowerCase() === "active"
+    const fmtDate = d => { const dt = new Date(d); return isNaN(dt) ? d : dt.toLocaleDateString() }
+
+    function fillProducts(sel) {
+      ;[...new Set(DATA.map(r => r.product))].sort().forEach(p => {
+        const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o)
+      })
+    }
+
+    let openMenu = null
+    document.addEventListener("click", () => { if (openMenu) { openMenu.hidden = true; openMenu = null } })
+
+    function keyCell(active) {
+      if (!active) return `<td class="muted">not active</td>`
+      return `<td><span class="key" data-mask="••••••••••••">••••••••••••</span><button class="link-btn" data-key>Show</button></td>`
+    }
+
+    function renderRows(rows) {
+      const body = document.getElementById("body")
+      body.innerHTML = ""
+      rows.forEach(r => {
+        const active = isActive(r.state)
+        const tr = document.createElement("tr")
+        tr.innerHTML =
+          `<td>${r.name}</td>` +
+          `<td><span class="pill ${r.type.toLowerCase()}">${r.type}</span></td>` +
+          `<td>${r.group || "—"}</td>` +
+          `<td>${r.product || "—"}</td>` +
+          `<td class="state ${active ? "active" : "inactive"}">${r.state}</td>` +
+          keyCell(active) + keyCell(active) +
+          `<td>${fmtDate(r.date)}</td>` +
+          `<td class="col-actions">${active ? `<button class="kebab" aria-label="Actions">⋯</button>
+             <div class="menu" hidden><button>Regenerate primary key</button><button>Regenerate secondary key</button><button class="danger">Cancel subscription</button></div>` : ""}</td>`
+        body.appendChild(tr)
+      })
+      wireRowActions(body)
+    }
+
+    function wireRowActions(scope) {
+      scope.querySelectorAll("[data-key]").forEach(btn => btn.addEventListener("click", e => {
+        e.stopPropagation()
+        const span = btn.previousElementSibling
+        if (btn.textContent === "Show") { span.textContent = FAKE_KEY; btn.textContent = "Hide" }
+        else { span.textContent = span.dataset.mask; btn.textContent = "Show" }
+      }))
+      scope.querySelectorAll(".kebab").forEach(k => k.addEventListener("click", e => {
+        e.stopPropagation()
+        const menu = k.nextElementSibling
+        const willOpen = menu.hidden
+        if (openMenu) { openMenu.hidden = true; openMenu = null }
+        if (willOpen) { menu.hidden = false; openMenu = menu }
+      }))
+    }
+
+    // ---- chips-specific wiring ----
+    const q = document.getElementById("q")
+    const fProduct = document.getElementById("fProduct")
+    const count = document.getElementById("count")
+    const empty = document.getElementById("empty")
+    let typeVal = "", stateVal = ""
+    fillProducts(fProduct)
+
+    function wireChipGroup(id, onPick) {
+      const group = document.getElementById(id)
+      group.addEventListener("click", e => {
+        const chip = e.target.closest(".chip")
+        if (!chip) return
+        group.querySelectorAll(".chip").forEach(c => c.classList.remove("active"))
+        chip.classList.add("active")
+        onPick(chip.dataset.val)
+      })
+    }
+    wireChipGroup("typeChips", v => { typeVal = v; apply() })
+    wireChipGroup("stateChips", v => { stateVal = v; apply() })
+
+    function apply() {
+      const term = q.value.trim().toLowerCase()
+      const p = fProduct.value
+      const rows = DATA.filter(r =>
+        (!term || r.name.toLowerCase().includes(term)) &&
+        (!typeVal || r.type === typeVal) &&
+        (!p || r.product === p) &&
+        (!stateVal || (stateVal === "Active" ? isActive(r.state) : !isActive(r.state)))
+      )
+      renderRows(rows)
+      count.innerHTML = `Showing <b>${rows.length}</b> of ${DATA.length}`
+      empty.hidden = rows.length !== 0
+    }
+
+    function clearAll() {
+      q.value = ""; fProduct.value = ""; typeVal = ""; stateVal = ""
+      document.querySelectorAll(".chipgroup").forEach(g => {
+        g.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.val === ""))
+      })
+      apply()
+    }
+
+    q.addEventListener("input", apply)
+    fProduct.addEventListener("input", apply)
+    document.getElementById("emptyClear").addEventListener("click", clearAll)
+    apply()
+  </script>
+</body>
+</html>

@@ -11,6 +11,36 @@
   <div class="group-subscriptions">
     <h3 id="title" class="group-subscriptions__title"></h3>
     <p id="status" class="status"></p>
+    <div class="filter-toolbar">
+      <div class="filter-field filter-search">
+        <label for="filterSearch">Search</label>
+        <input id="filterSearch" type="text" placeholder="Search by name…" autocomplete="off" />
+      </div>
+      <div class="filter-field">
+        <label for="filterType">Type</label>
+        <select id="filterType" class="filter-control">
+          <option value="">All types</option>
+          <option value="User">User</option>
+          <option value="Group">Group</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="filterProduct">Product</label>
+        <select id="filterProduct" class="filter-control">
+          <option value="">All products</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="filterState">State</label>
+        <select id="filterState" class="filter-control">
+          <option value="">All states</option>
+          <option value="Active" selected>Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <button id="filterClear" class="filter-clear" type="button">Clear filters</button>
+      <span id="filterCount" class="filter-count"></span>
+    </div>
     <table class="group-table">
       <thead>
         <tr>

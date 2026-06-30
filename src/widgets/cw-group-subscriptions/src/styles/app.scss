@@ -21,6 +21,84 @@ body {
   margin: 0 0 12px;
 }
 
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #605e5c;
+}
+
+.filter-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.filter-search input,
+.filter-control {
+  padding: 8px 11px;
+  font-size: 14px;
+  border: 1px solid #8a8886;
+  border-radius: 4px;
+  background: #fff;
+  color: #323130;
+}
+
+.filter-search input {
+  width: 100%;
+}
+
+.filter-control {
+  min-width: 140px;
+}
+
+.filter-search input:focus,
+.filter-control:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 1px #0078d4;
+}
+
+.filter-clear {
+  background: none;
+  border: none;
+  color: #0078d4;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 4px;
+}
+
+.filter-clear:hover {
+  text-decoration: underline;
+}
+
+.filter-count {
+  margin-left: auto;
+  align-self: center;
+  font-size: 13px;
+  color: #605e5c;
+  white-space: nowrap;
+}
+
+.filter-count b {
+  color: #323130;
+}
+
 .group-table {
   width: 100%;
   border-collapse: separate;

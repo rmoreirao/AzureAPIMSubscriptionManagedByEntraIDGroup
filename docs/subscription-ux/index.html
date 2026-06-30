@@ -25,13 +25,17 @@
     .tag { display:inline-block; font-size:12px; font-weight:600; color:var(--blue); background:#eff6fc; padding:3px 10px; border-radius:999px; margin-bottom:10px; }
     a.card h2 { font-size: 17px; margin: 0 0 6px; }
     a.card p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.45; }
+    h2.section { font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:36px 0 14px; }
+    h2.section:first-of-type { margin-top:0; }
     @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Subscription creation — 4 UX options</h1>
-    <p class="sub">Prototypes that simplify the current two-big-cards chooser. Each is self-contained (mock data, no backend) so you can click through and validate. Open each, then tell me which one to ship.</p>
+    <h1>Subscription UX prototypes</h1>
+    <p class="sub">Self-contained prototypes (mock data, no backend) you can click through to validate. Two sets: simplifying subscription <em>creation</em>, and adding <em>filtering</em> to the subscriptions grid. Open each, then tell me which to ship.</p>
+
+    <h2 class="section">Subscription creation — 4 options</h2>
     <div class="grid">
       <a class="card" href="./option-1-segmented.html">
         <span class="tag">Option 1</span>
@@ -52,6 +56,30 @@
         <span class="tag">Option 4</span>
         <h2>Compact icon cards</h2>
         <p>The familiar cards, but smaller, with icons, and they expand inline (accordion) instead of replacing the whole view.</p>
+      </a>
+    </div>
+
+    <h2 class="section">Grid filtering — 4 options</h2>
+    <div class="grid">
+      <a class="card" href="./filter-1-toolbar.html">
+        <span class="tag">Filter 1</span>
+        <h2>Inline filter toolbar</h2>
+        <p>A compact toolbar above the grid: name search plus Type, Product and State dropdowns, a live result count and one-click Clear. Filters apply instantly and combine.</p>
+      </a>
+      <a class="card" href="./filter-2-chips.html">
+        <span class="tag">Filter 2</span>
+        <h2>Search + quick-filter chips</h2>
+        <p>A search box plus one-click toggle chips for the common facets (Type, State) and a small Product dropdown. Optimised for the most frequent filters.</p>
+      </a>
+      <a class="card" href="./filter-3-column-headers.html">
+        <span class="tag">Filter 3</span>
+        <h2>Per-column header filters</h2>
+        <p>Excel-style filter controls embedded in a second header row, right under each column title. Filtering lives where the data is, with a pinned header.</p>
+      </a>
+      <a class="card" href="./filter-4-panel.html">
+        <span class="tag">Filter 4</span>
+        <h2>Collapsible filter drawer</h2>
+        <p>A search box plus a “Filters” button with an active-count badge that opens a side drawer of grouped facets with live counts, Apply/Clear and removable active-filter chips.</p>
       </a>
     </div>
   </div>

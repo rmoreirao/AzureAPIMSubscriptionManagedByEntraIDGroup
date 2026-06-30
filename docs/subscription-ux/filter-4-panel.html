@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filter Option 4 — Collapsible filter drawer</title>
+  <style>
+    :root {
+      --blue:#0078d4; --blue-dark:#106ebe; --ink:#323130; --muted:#605e5c;
+      --line:#edebe9; --line2:#e1dfdd; --head:#f3f2f1; --bg:#faf9f8;
+      --green:#107c10; --red:#a4262c; --purple:#5c2e91;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:40px 24px; background:var(--bg); color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.4; }
+    .stage { max-width:1040px; margin:0 auto; }
+    .back { display:inline-block; font-size:13px; color:var(--blue); text-decoration:none; margin-bottom:18px; }
+    .back:hover { text-decoration:underline; }
+    .title { font-size:22px; font-weight:600; margin:0 0 4px; }
+    .lede { color:var(--muted); margin:0 0 22px; font-size:14px; max-width:760px; }
+
+    /* ---- top controls ---- */
+    .controls { display:flex; align-items:center; gap:12px; margin:0 0 10px; flex-wrap:wrap; }
+    .search { position:relative; flex:1 1 240px; min-width:200px; }
+    .search input { width:100%; padding:8px 12px 8px 32px; font-size:14px; border:1px solid #8a8886; border-radius:6px; background:#fff; }
+    .search svg { position:absolute; left:9px; top:9px; color:var(--muted); pointer-events:none; }
+    .search input:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+    .filters-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; font-size:14px; font-weight:600;
+      color:var(--ink); background:#fff; border:1px solid #8a8886; border-radius:6px; cursor:pointer; }
+    .filters-btn:hover { background:#f9f9f9; }
+    .badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 6px;
+      font-size:12px; font-weight:700; color:#fff; background:var(--blue); border-radius:999px; }
+    .count { font-size:13px; color:var(--muted); margin-left:auto; white-space:nowrap; }
+    .count b { color:var(--ink); }
+
+    /* ---- active filter summary chips ---- */
+    .active-row { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px; min-height:0; }
+    .active-row:empty { display:none; }
+    .achip { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--blue);
+      background:#eff6fc; border:1px solid #cfe6fa; padding:3px 6px 3px 10px; border-radius:999px; }
+    .achip button { background:none; border:none; color:var(--blue); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+
+    /* ---- drawer ---- */
+    .scrim { position:fixed; inset:0; background:rgba(0,0,0,.35); opacity:0; pointer-events:none; transition:opacity .18s; z-index:40; }
+    .scrim.open { opacity:1; pointer-events:auto; }
+    .drawer { position:fixed; top:0; right:0; height:100%; width:340px; max-width:90vw; background:#fff; z-index:41;
+      box-shadow:-8px 0 24px rgba(0,0,0,.18); transform:translateX(100%); transition:transform .2s ease; display:flex; flex-direction:column; }
+    .drawer.open { transform:translateX(0); }
+    .drawer header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--line); }
+    .drawer header h2 { font-size:17px; margin:0; }
+    .drawer header button { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); line-height:1; }
+    .drawer .scroll { padding:8px 20px 20px; overflow-y:auto; flex:1; }
+    .facet { padding:14px 0; border-bottom:1px solid var(--line); }
+    .facet h3 { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 10px; }
+    .opt { display:flex; align-items:center; gap:10px; padding:6px 0; cursor:pointer; font-size:14px; }
+    .opt input { accent-color:var(--blue); width:16px; height:16px; }
+    .opt .c { margin-left:auto; font-size:12px; color:var(--muted); background:var(--head); border-radius:999px; padding:1px 9px; }
+    .drawer footer { display:flex; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
+    .btn { flex:1; padding:10px 16px; font-size:14px; font-weight:600; border-radius:6px; cursor:pointer; }
+    .btn-primary { color:#fff; background:var(--blue); border:1px solid var(--blue); }
+    .btn-primary:hover { background:var(--blue-dark); }
+    .btn-ghost { color:var(--ink); background:#fff; border:1px solid #8a8886; }
+    .btn-ghost:hover { background:#f9f9f9; }
+
+    /* ---- grid (shared look) ---- */
+    .table-wrap { overflow-x:auto; border:1px solid var(--line2); border-radius:8px; background:#fff; }
+    table { width:100%; border-collapse:separate; border-spacing:0; font-size:15px; }
+    th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--line); white-space:nowrap; }
+    th { font-weight:600; background:var(--head); position:sticky; top:0; z-index:2; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:#f9f9f9; }
+    .key { font-family:"Cascadia Code",Consolas,monospace; margin-right:8px; color:var(--muted); }
+    .link-btn { background:none; border:none; color:var(--blue); cursor:pointer; font-size:14px; padding:0; }
+    .link-btn:hover { text-decoration:underline; }
+    .pill { display:inline-block; font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; }
+    .pill.user { color:var(--purple); background:#f3eefb; }
+    .pill.group { color:var(--green); background:#eafaea; }
+    .state { font-weight:600; }
+    .state.active { color:var(--green); }
+    .state.inactive { color:var(--red); }
+    .muted { color:var(--muted); font-style:italic; }
+    .col-actions { position:sticky; right:0; width:48px; text-align:center; background:#fff; box-shadow:-6px 0 8px -6px rgba(0,0,0,.18); }
+    th.col-actions { background:var(--head); z-index:3; }
+    tbody tr:hover td.col-actions { background:#f9f9f9; }
+    .kebab { background:none; border:none; cursor:pointer; font-size:18px; line-height:1; padding:4px 8px; border-radius:4px; color:var(--muted); }
+    .kebab:hover { background:#efefef; color:var(--ink); }
+    .menu { position:absolute; right:10px; z-index:20; min-width:210px; background:#fff; border:1px solid var(--line); border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.16); padding:4px 0; }
+    .menu[hidden] { display:none; }
+    .menu button { display:block; width:100%; text-align:left; background:none; border:none; padding:8px 14px; font-size:14px; cursor:pointer; color:var(--ink); }
+    .menu button:hover { background:var(--head); }
+    .menu button.danger { color:var(--red); }
+    .empty { padding:34px 16px; text-align:center; color:var(--muted); }
+    .empty button { background:none; border:none; color:var(--blue); font-weight:600; cursor:pointer; }
+    .empty button:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <a class="back" href="./index.html">&larr; All prototypes</a>
+    <h1 class="title">Group Subscriptions — Collapsible filter drawer</h1>
+    <p class="lede">Option 4. A persistent search box plus a "Filters" button (with a badge counting how
+      many filters are active) that opens a side drawer. The drawer groups every facet — Type, State,
+      Product — each option showing a live count, with Apply and Clear. Best when the widget is narrow and
+      toolbar space is scarce. Active filters appear as removable chips above the grid; the Actions column
+      stays pinned.</p>
+
+    <div class="controls">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M8.5 3a5.5 5.5 0 0 1 4.23 9.02l3.12 3.13-1.06 1.06-3.13-3.12A5.5 5.5 0 1 1 8.5 3Zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+        <input id="q" type="text" placeholder="Search by name…" autocomplete="off" />
+      </div>
+      <button class="filters-btn" id="openFilters" type="button">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path d="M3 5h14l-5.5 6.5V17l-3-2v-3.5L3 5Z"/></svg>
+        Filters <span class="badge" id="badge" hidden>0</span>
+      </button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="active-row" id="activeRow"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Type</th><th>Group</th><th>Product</th><th>State</th>
+            <th>Primary key</th><th>Secondary key</th><th>Date created</th><th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden>No subscriptions match your filters. <button id="emptyClear" type="button">Clear filters</button></div>
+  </div>
+
+  <!-- drawer -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <header><h2>Filters</h2><button id="closeFilters" aria-label="Close">✕</button></header>
+    <div class="scroll">
+      <div class="facet"><h3>Type</h3><div id="typeFacet"></div></div>
+      <div class="facet"><h3>State</h3><div id="stateFacet"></div></div>
+      <div class="facet"><h3>Product</h3><div id="productFacet"></div></div>
+    </div>
+    <footer>
+      <button class="btn btn-ghost" id="drawerClear" type="button">Clear all</button>
+      <button class="btn btn-primary" id="drawerApply" type="button">Apply</button>
+    </footer>
+  </aside>
+
+  <script>
+    // ---- shared mock dataset (both User and Group subscriptions) ----
+    const DATA = [
+      { type:"Group", name:"payments-prod",       group:"Payments Team",  product:"Payments API",      state:"Active",    date:"2026-01-12" },
+      { type:"Group", name:"payments-staging",    group:"Payments Team",  product:"Payments API",      state:"Active",    date:"2026-02-03" },
+      { type:"User",  name:"rmoreirao-sandbox",   group:"",               product:"Starter",           state:"Active",    date:"2026-03-21" },
+      { type:"Group", name:"orders-prod",         group:"Orders Team",    product:"Orders API",        state:"Active",    date:"2025-11-08" },
+      { type:"Group", name:"orders-legacy",       group:"Orders Team",    product:"Orders API",        state:"Cancelled", date:"2025-09-15" },
+      { type:"User",  name:"demo-key",            group:"",               product:"Unlimited",         state:"Active",    date:"2026-04-02" },
+      { type:"User",  name:"old-trial",           group:"",               product:"Starter",           state:"Suspended", date:"2025-06-30" },
+      { type:"Group", name:"inventory-prod",      group:"Inventory Team", product:"Inventory API",     state:"Active",    date:"2026-02-19" },
+      { type:"Group", name:"inventory-test",      group:"Inventory Team", product:"Inventory API",     state:"Suspended", date:"2025-12-01" },
+      { type:"User",  name:"analytics-personal",  group:"",               product:"Analytics API",     state:"Active",    date:"2026-05-10" },
+      { type:"Group", name:"analytics-shared",    group:"Data Science",   product:"Analytics API",     state:"Active",    date:"2026-03-30" },
+      { type:"User",  name:"legacy-app",          group:"",               product:"Unlimited",         state:"Cancelled", date:"2025-07-22" },
+      { type:"Group", name:"notifications-prod",  group:"Platform",       product:"Notifications API", state:"Active",    date:"2026-01-28" },
+      { type:"User",  name:"qa-automation",       group:"",               product:"Starter",           state:"Active",    date:"2026-04-18" },
+    ]
+    const FAKE_KEY = "a1b2c3d4e5f6g7h8i9j0k1l2"
+    const isActive = s => (s || "").toLowerCase() === "active"
+    const fmtDate = d => { const dt = new Date(d); return isNaN(dt) ? d : dt.toLocaleDateString() }
+
+    let openMenu = null
+    document.addEventListener("click", () => { if (openMenu) { openMenu.hidden = true; openMenu = null } })
+
+    function keyCell(active) {
+      if (!active) return `<td class="muted">not active</td>`
+      return `<td><span class="key" data-mask="••••••••••••">••••••••••••</span><button class="link-btn" data-key>Show</button></td>`
+    }
+
+    function renderRows(rows) {
+      const body = document.getElementById("body")
+      body.innerHTML = ""
+      rows.forEach(r => {
+        const active = isActive(r.state)
+        const tr = document.createElement("tr")
+        tr.innerHTML =
+          `<td>${r.name}</td>` +
+          `<td><span class="pill ${r.type.toLowerCase()}">${r.type}</span></td>` +
+          `<td>${r.group || "—"}</td>` +
+          `<td>${r.product || "—"}</td>` +
+          `<td class="state ${active ? "active" : "inactive"}">${r.state}</td>` +
+          keyCell(active) + keyCell(active) +
+          `<td>${fmtDate(r.date)}</td>` +
+          `<td class="col-actions">${active ? `<button class="kebab" aria-label="Actions">⋯</button>
+             <div class="menu" hidden><button>Regenerate primary key</button><button>Regenerate secondary key</button><button class="danger">Cancel subscription</button></div>` : ""}</td>`
+        body.appendChild(tr)
+      })
+      wireRowActions(body)
+    }
+
+    function wireRowActions(scope) {
+      scope.querySelectorAll("[data-key]").forEach(btn => btn.addEventListener("click", e => {
+        e.stopPropagation()
+        const span = btn.previousElementSibling
+        if (btn.textContent === "Show") { span.textContent = FAKE_KEY; btn.textContent = "Hide" }
+        else { span.textContent = span.dataset.mask; btn.textContent = "Show" }
+      }))
+      scope.querySelectorAll(".kebab").forEach(k => k.addEventListener("click", e => {
+        e.stopPropagation()
+        const menu = k.nextElementSibling
+        const willOpen = menu.hidden
+        if (openMenu) { openMenu.hidden = true; openMenu = null }
+        if (willOpen) { menu.hidden = false; openMenu = menu }
+      }))
+    }
+
+    // ---- drawer-specific wiring ----
+    const q = document.getElementById("q")
+    const count = document.getElementById("count")
+    const empty = document.getElementById("empty")
+    const badge = document.getElementById("badge")
+    const activeRow = document.getElementById("activeRow")
+    const drawer = document.getElementById("drawer")
+    const scrim = document.getElementById("scrim")
+
+    // applied state (what the grid currently reflects)
+    let applied = { type:"", state:"", product:"" }
+
+    const stateMatches = (r, s) => s === "Active" ? isActive(r.state) : !isActive(r.state)
+    const countBy = pred => DATA.filter(pred).length
+
+    function buildFacets() {
+      // Type
+      const typeOpts = [["", "All types"], ["User", "User"], ["Group", "Group"]]
+      document.getElementById("typeFacet").innerHTML = typeOpts.map(([v, label]) => {
+        const c = v ? countBy(r => r.type === v) : DATA.length
+        return optHtml("type", v, label, c)
+      }).join("")
+      // State
+      const stateOpts = [["", "All states"], ["Active", "Active"], ["Inactive", "Inactive"]]
+      document.getElementById("stateFacet").innerHTML = stateOpts.map(([v, label]) => {
+        const c = v ? countBy(r => stateMatches(r, v)) : DATA.length
+        return optHtml("state", v, label, c)
+      }).join("")
+      // Product
+      const products = [...new Set(DATA.map(r => r.product))].sort()
+      const prodOpts = [["", "All products"], ...products.map(p => [p, p])]
+      document.getElementById("productFacet").innerHTML = prodOpts.map(([v, label]) => {
+        const c = v ? countBy(r => r.product === v) : DATA.length
+        return optHtml("product", v, label, c)
+      }).join("")
+      syncFacetSelection()
+    }
+
+    function optHtml(group, val, label, c) {
+      return `<label class="opt"><input type="radio" name="f-${group}" value="${val}" data-group="${group}" />
+        <span>${label}</span><span class="c">${c}</span></label>`
+    }
+
+    // pending = selection inside the drawer before Apply
+    let pending = { ...applied }
+    function syncFacetSelection() {
+      ["type", "state", "product"].forEach(g => {
+        drawer.querySelectorAll(`input[name="f-${g}"]`).forEach(i => { i.checked = (i.value === pending[g]) })
+      })
+    }
+
+    drawer.addEventListener("change", e => {
+      const g = e.target.dataset.group
+      if (g) pending[g] = e.target.value
+    })
+
+    function openDrawer() { pending = { ...applied }; syncFacetSelection(); drawer.classList.add("open"); scrim.classList.add("open"); drawer.setAttribute("aria-hidden", "false") }
+    function closeDrawer() { drawer.classList.remove("open"); scrim.classList.remove("open"); drawer.setAttribute("aria-hidden", "true") }
+
+    document.getElementById("openFilters").addEventListener("click", openDrawer)
+    document.getElementById("closeFilters").addEventListener("click", closeDrawer)
+    scrim.addEventListener("click", closeDrawer)
+    document.getElementById("drawerApply").addEventListener("click", () => { applied = { ...pending }; closeDrawer(); apply() })
+    document.getElementById("drawerClear").addEventListener("click", () => { pending = { type:"", state:"", product:"" }; syncFacetSelection() })
+
+    const LABELS = { type:"Type", state:"State", product:"Product" }
+    function renderActiveChips() {
+      activeRow.innerHTML = ""
+      Object.entries(applied).forEach(([k, v]) => {
+        if (!v) return
+        const chip = document.createElement("span")
+        chip.className = "achip"
+        chip.innerHTML = `${LABELS[k]}: ${v} <button aria-label="Remove">✕</button>`
+        chip.querySelector("button").addEventListener("click", () => { applied[k] = ""; apply() })
+        activeRow.appendChild(chip)
+      })
+    }
+
+    function apply() {
+      const term = q.value.trim().toLowerCase()
+      const rows = DATA.filter(r =>
+        (!term || r.name.toLowerCase().includes(term)) &&
+        (!applied.type || r.type === applied.type) &&
+        (!applied.product || r.product === applied.product) &&
+        (!applied.state || stateMatches(r, applied.state))
+      )
+      renderRows(rows)
+      count.innerHTML = `Showing <b>${rows.length}</b> of ${DATA.length}`
+      empty.hidden = rows.length !== 0
+      const active = Object.values(applied).filter(Boolean).length
+      badge.textContent = active
+      badge.hidden = active === 0
+      renderActiveChips()
+    }
+
+    q.addEventListener("input", apply)
+    document.getElementById("emptyClear").addEventListener("click", () => { q.value = ""; applied = { type:"", state:"", product:"" }; apply() })
+
+    buildFacets()
+    apply()
+  </script>
+</body>
+</html>

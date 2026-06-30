@@ -5,9 +5,15 @@ keys is governed by membership of an **Entra ID group** rather than by a single 
 
 ## Architecture
 
-The diagram below is exported automatically from [docs/diagram.drawio](docs/diagram.drawio) by a GitHub Actions workflow whenever the source file changes.
+The diagrams below are exported automatically from [docs/diagram.drawio](docs/diagram.drawio) by a GitHub Actions workflow whenever the source file changes.
 
-![Architecture diagram](docs/export/diagram.png)
+### Solution (simplified)
+
+![Solution (simplified)](docs/export/diagram-SolutionSimplified.png)
+
+### Solution components
+
+![Solution components](docs/export/diagram-SolutionComponents.png)
 
 ### Azure resources
 
