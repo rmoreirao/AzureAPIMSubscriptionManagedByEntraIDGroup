@@ -27,7 +27,7 @@ export function createApiClient(secrets: Secrets, functionBaseUrl: string) {
       console.info(`[cw-group-subscriptions] ${method} ${url} → ${response.status} ${response.statusText}`)
       return response
     } catch (error) {
-      // A malformed base URL (e.g. the unconfigured placeholder "https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api")
+      // A malformed base URL (e.g. the unconfigured placeholder "https://<your-func-app>.azurewebsites.net/api")
       // makes fetch throw synchronously with no entry in the Network tab. Surface it clearly.
       console.error(
         `[cw-group-subscriptions] fetch failed for ${method} ${url}. ` +

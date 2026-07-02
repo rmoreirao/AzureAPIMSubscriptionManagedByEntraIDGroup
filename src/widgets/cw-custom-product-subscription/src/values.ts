@@ -26,6 +26,6 @@ export const valuesDefault: Readonly<Values> = Object.freeze({
   groupDisclaimer: "All members of this group will be able to manage this subscription.",
   personalButtonLabel: "Subscribe",
   groupButtonLabel: "Create",
-  functionBaseUrl: "https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api",
+  functionBaseUrl: "https://<your-func-app>.azurewebsites.net/api",
   scope: "/apis",
 })

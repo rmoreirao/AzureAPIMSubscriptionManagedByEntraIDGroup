@@ -50,7 +50,7 @@ Each widget exposes editor values configured in the Dev Portal admin:
 - **Group Subscriptions** — `functionBaseUrl` and title.
 
 `functionBaseUrl` is the deployed Function App API base, e.g.
-`https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api`. The Function App must allow the Dev Portal origin in
+`https://<your-func-app>.azurewebsites.net/api`. The Function App must allow the Dev Portal origin in
 its CORS settings (configured automatically by the Bicep infra).
 
 ## Develop & deploy
@@ -65,12 +65,17 @@ npm run build          # tsc + vite → ./dist
 
 ### Deploying
 
-APIM service coordinates are read from environment variables (no ids are committed). The easiest
-path is the helper script, which exports the variables and runs `npm run deploy` for one or all
-widgets:
+APIM service coordinates are read from environment variables (no ids are committed). When a repo
+[`.env`](../../.env.sample) exists, `deploy-widgets.ps1` loads it automatically — mapping
+`AZURE_SUBSCRIPTION_ID` / `AZURE_RESOURCE_GROUP` / `APIM_SERVICE_NAME` and injecting
+`FUNCTION_BASE_URL` into each widget's compiled default — so a plain `./deploy-widgets.ps1` just
+works after `scripts/Deploy.ps1`. Explicit parameters still override `.env`:
 
 ```powershell
-# from src/widgets/scripts
+# from src/widgets/scripts — uses values from the repo .env
+./deploy-widgets.ps1
+
+# override coordinates explicitly
 ./deploy-widgets.ps1 -ResourceGroup <rg> -ServiceName <apim-service> [-SubscriptionId <sub>]
 
 # a single widget
@@ -80,9 +85,10 @@ widgets:
 ./deploy-widgets.ps1 -DryRun -ResourceGroup <rg> -ServiceName <apim-service>
 ```
 
-`-SubscriptionId` falls back to `$env:APIM_SUBSCRIPTION_ID` and then to the current `az account show`
-context. Authentication uses an interactive sign-in unless `-AccessToken` / `$env:AZ_ACCESS_TOKEN`
-is provided.
+`-SubscriptionId` falls back to `$env:APIM_SUBSCRIPTION_ID`, then `.env`, then the current
+`az account show` context. `-FunctionBaseUrl` falls back to `$env:FUNCTION_BASE_URL` then `.env`.
+Authentication uses an interactive sign-in unless `-AccessToken` / `$env:AZ_ACCESS_TOKEN` is
+provided.
 
 To deploy a single widget manually instead of via the script, set the variables yourself and run
 `npm run deploy`:

@@ -27,10 +27,10 @@
     The subscription count limit to set on every product. Defaults to 10000.
 
 .EXAMPLE
-    ./Set-ProductSubscriptionLimits.ps1 -ResourceGroup rg-apimteam-dev
+    ./Set-ProductSubscriptionLimits.ps1 -ResourceGroup <resource-group>
 
 .EXAMPLE
-    ./Set-ProductSubscriptionLimits.ps1 -ResourceGroup rg-apimteam-dev -ApimName apimteam-apim-xxxx -Limit 10000
+    ./Set-ProductSubscriptionLimits.ps1 -ResourceGroup <resource-group> -ApimName <apim-service> -Limit 10000
 #>
 [CmdletBinding()]
 param(

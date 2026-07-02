@@ -5,5 +5,5 @@ export type Values = {
 
 export const valuesDefault: Readonly<Values> = Object.freeze({
   title: "Group Subscriptions",
-  functionBaseUrl: "https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api",
+  functionBaseUrl: "https://<your-func-app>.azurewebsites.net/api",
 })

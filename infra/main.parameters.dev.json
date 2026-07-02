@@ -6,10 +6,10 @@
       "value": "northeurope"
     },
     "prefix": {
-      "value": "apimteam"
+      "value": "apim"
     },
     "publisherEmail": {
-      "value": "admin@example.com"
+      "value": "you@example.com"
     },
     "publisherName": {
       "value": "Group Subscriptions"

@@ -1,6 +1,7 @@
 targetScope = 'resourceGroup'
 
-// Region: northeurope (westeurope had Cosmos capacity constraints).
+// Region: set via the `location` parameter (northeurope is a validated default; westeurope had
+// Cosmos capacity constraints at deploy time).
 
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
@@ -8,7 +9,7 @@ param location string = resourceGroup().location
 @description('Short prefix for resource names (lowercase alphanumeric).')
 @minLength(3)
 @maxLength(11)
-param prefix string = 'apimteam'
+param prefix string
 
 @description('Publisher email for API Management / developer portal.')
 param publisherEmail string

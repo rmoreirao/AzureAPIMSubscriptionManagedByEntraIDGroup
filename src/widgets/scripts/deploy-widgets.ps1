@@ -41,7 +41,7 @@
   Do not publish (create a new portal revision of) the APIM developer portal after deploying widgets.
 
 .EXAMPLE
-  ./deploy-widgets.ps1 -ResourceGroup rg-apimteam-dev -ServiceName apimteam-apim-3dexfwdm3jz34
+  ./deploy-widgets.ps1 -ResourceGroup <rg> -ServiceName <apim-service>
 
 .EXAMPLE
   ./deploy-widgets.ps1 -Widget cw-group-subscriptions -DryRun
@@ -55,6 +55,7 @@ param(
   [string]$ServiceName = $env:APIM_SERVICE_NAME,
   [string]$ManagementEndpoint = $(if ($env:APIM_MANAGEMENT_ENDPOINT) { $env:APIM_MANAGEMENT_ENDPOINT } else { "https://management.azure.com" }),
   [string]$ApiVersion = $(if ($env:APIM_API_VERSION) { $env:APIM_API_VERSION } else { "2024-05-01" }),
+  [string]$FunctionBaseUrl = $env:FUNCTION_BASE_URL,
   [string]$AccessToken,
   [switch]$DryRun,
   [switch]$SkipBuild,
@@ -65,6 +66,17 @@ $ErrorActionPreference = "Stop"
 
 # .../src/widgets (this script lives in .../src/widgets/scripts)
 $widgetsRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $widgetsRoot)
+
+# Load the repo's .env (single source of truth) and fill in any values not supplied as parameters.
+# The .env uses AZURE_* / FUNCTION_BASE_URL keys; map them onto the APIM_* coordinates this tooling
+# expects. Explicit parameters and pre-set APIM_* env vars always win.
+. (Join-Path $repoRoot "scripts/lib/DotEnv.ps1")
+$dotenv = Import-DotEnv -SetEnv $false
+if (-not $SubscriptionId)  { $SubscriptionId  = if ($dotenv["APIM_SUBSCRIPTION_ID"]) { $dotenv["APIM_SUBSCRIPTION_ID"] } else { $dotenv["AZURE_SUBSCRIPTION_ID"] } }
+if (-not $ResourceGroup)   { $ResourceGroup   = if ($dotenv["APIM_RESOURCE_GROUP"])  { $dotenv["APIM_RESOURCE_GROUP"] }  else { $dotenv["AZURE_RESOURCE_GROUP"] } }
+if (-not $ServiceName)     { $ServiceName     = $dotenv["APIM_SERVICE_NAME"] }
+if (-not $FunctionBaseUrl) { $FunctionBaseUrl = $dotenv["FUNCTION_BASE_URL"] }
 
 $allWidgets = @("cw-group-subscriptions", "cw-custom-product-subscription")
 $targets = if ($Widget -eq "all") { $allWidgets } else { @($Widget) }
@@ -106,15 +118,35 @@ else { Remove-Item Env:WIDGET_DEPLOY_DRYRUN -ErrorAction SilentlyContinue }
 Write-Host "APIM service : $ServiceName" -ForegroundColor Cyan
 Write-Host "Resource group: $ResourceGroup" -ForegroundColor Cyan
 Write-Host "Subscription : $SubscriptionId" -ForegroundColor Cyan
+if ($FunctionBaseUrl) { Write-Host "Function URL : $FunctionBaseUrl" -ForegroundColor Cyan }
 Write-Host "Widgets      : $($targets -join ', ')" -ForegroundColor Cyan
 if ($DryRun) { Write-Host "DRY RUN - nothing will be pushed to blob storage." -ForegroundColor Yellow }
+
+# A configured FUNCTION_BASE_URL is baked into each widget's compiled default so the deployed widget
+# works without hand-editing the Dev Portal editor value. Placeholders containing '<' are ignored
+# (the widget treats them as "not configured").
+$injectBaseUrl = $FunctionBaseUrl -and ($FunctionBaseUrl -notmatch '[<>]')
+function Set-WidgetFunctionBaseUrl {
+  param([Parameter(Mandatory)][string]$ValuesPath, [Parameter(Mandatory)][string]$Url)
+  $content = Get-Content -LiteralPath $ValuesPath -Raw
+  $updated = [regex]::Replace($content, '(functionBaseUrl:\s*")[^"]*(")', "`${1}$Url`${2}")
+  Set-Content -LiteralPath $ValuesPath -Value $updated -NoNewline
+}
 
 $failures = @()
 foreach ($w in $targets) {
   $dir = Join-Path $widgetsRoot $w
   Write-Host "`n=== $w ===" -ForegroundColor Green
   Push-Location $dir
+  $valuesPath = Join-Path $dir "src/values.ts"
+  $originalValues = $null
   try {
+    if ($injectBaseUrl -and (Test-Path $valuesPath)) {
+      $originalValues = Get-Content -LiteralPath $valuesPath -Raw
+      Set-WidgetFunctionBaseUrl -ValuesPath $valuesPath -Url $FunctionBaseUrl
+      Write-Host "Injected functionBaseUrl into $w/src/values.ts" -ForegroundColor DarkGray
+    }
+
     if (-not (Test-Path (Join-Path $dir "node_modules"))) {
       Write-Host "Installing dependencies..."
       npm install
@@ -129,6 +161,8 @@ foreach ($w in $targets) {
     $failures += $w
   }
   finally {
+    # Restore the source placeholder so no environment-specific URL is left in the working tree.
+    if ($null -ne $originalValues) { Set-Content -LiteralPath $valuesPath -Value $originalValues -NoNewline }
     Pop-Location
   }
 }

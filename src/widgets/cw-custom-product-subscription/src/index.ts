@@ -141,7 +141,7 @@ async function main(): Promise<void> {
   if (!baseUrlConfigured) {
     logError(
       "Function base URL is not configured. Set the widget's 'functionBaseUrl' editor value to the " +
-        "deployed Function App API base (e.g. https://apimteam-func-3dexfwdm3jz34.azurewebsites.net/api). The current value " +
+        "deployed Function App API base (e.g. https://<your-func-app>.azurewebsites.net/api). The current value " +
         "is not a valid URL, so fetch() throws before any network request is made.",
       values.functionBaseUrl
     )

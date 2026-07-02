@@ -39,29 +39,29 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID || '0f441d5a-6948-438f-a66f-6b27972fb414' }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID || 'b9e20f22-cdf3-4d31-9628-2e615edcddb1' }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID || 'b0dfd5b3-9f3c-4fb5-ae5e-0e7f81eab970' }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Functions
         id: deploy
         continue-on-error: true
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
           package: ${{ env.PUBLISH_DIR }}
 
       - name: Retry deploy (flaky FC1 storage check)
         if: steps.deploy.outcome == 'failure'
         uses: Azure/functions-action@v1
         with:
-          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
           package: ${{ env.PUBLISH_DIR }}
 
       - name: Post-deploy health gate
         env:
-          APP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME || 'apimteam-func-3dexfwdm3jz34' }}
-          RG_NAME: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-apimteam-dev' }}
+          APP_NAME: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
+          RG_NAME: ${{ vars.AZURE_RESOURCE_GROUP }}
         run: |
           set -euo pipefail
           # A failed/flaky Flex-Consumption deploy can leave the host returning 503. Restart and
